@@ -1,0 +1,1 @@
+export const API_URL = "https://back-production-bba3.up.railway.app";
