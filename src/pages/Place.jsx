@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { Container, Text, Box, List, ListItem } from "@chakra-ui/react";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import axios from "axios";
+import { API_SAFE_CELLS } from "../config/JS_apiConfig"; // Импортируем путь
 
-const place = () => {
+const Place = () => {
   const [safeCells, setSafeCells] = useState([]); // Состояние для безопасных ячеек
   const [selectedCellId, setSelectedCellId] = useState(null); // Состояние для отслеживания выбранной ячейки
   const refs = useRef([]); // Массив рефов для каждой ячейки
@@ -12,13 +13,13 @@ const place = () => {
   // Функция для загрузки данных о безопасных ячейках из API
   const fetchSafeCells = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5000/api/safeshelves");
+      const response = await axios.get(API_SAFE_CELLS, { withCredentials: true }); // Используем путь из конфига
       setSafeCells(response.data); // Обновляем состояние безопасных ячеек
     } catch (error) {
       console.error("Ошибка при загрузке данных о безопасных ячейках:", error);
     }
   };
-
+  
   // Загружаем безопасные ячейки при монтировании компонента
   useEffect(() => {
     fetchSafeCells();
