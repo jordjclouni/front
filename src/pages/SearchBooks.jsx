@@ -20,14 +20,14 @@ import { SearchIcon, CloseIcon, AddIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const API_BOOKS = "http://127.0.0.1:5000/api/books";
-const API_AUTHORS = "http://127.0.0.1:5000/api/authors";
-const API_SHELVES = "http://127.0.0.1:5000/api/safeshelves";
-const API_GENRES = "http://127.0.0.1:5000/api/genres";
-const API_INVENTORY = "http://127.0.0.1:5000/api/inventory";
-const API_LOGIN = "http://127.0.0.1:5000/api/login";
-const API_LOGOUT = "http://127.0.0.1:5000/api/logout";
-const API_SEND_EMAIL = "http://127.0.0.1:5000/api/send-email";
+const API_BOOKS = "https://back-production-08e5.up.railway.app/api/books";
+const API_AUTHORS = "https://back-production-08e5.up.railway.app/api/authors";
+const API_SHELVES = "https://back-production-08e5.up.railway.app/api/safeshelves";
+const API_GENRES = "https://back-production-08e5.up.railway.app/api/genres";
+const API_INVENTORY = "https://back-production-08e5.up.railway.app/api/inventory";
+const API_LOGIN = "https://back-production-08e5.up.railway.app/api/login";
+const API_LOGOUT = "https://back-production-08e5.up.railway.app/api/logout";
+const API_SEND_EMAIL = "https://back-production-08e5.up.railway.app/api/send-email";
 
 const SearchBooks = () => {
   const [books, setBooks] = useState([]);

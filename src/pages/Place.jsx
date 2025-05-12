@@ -12,7 +12,7 @@ const place = () => {
   // Функция для загрузки данных о безопасных ячейках из API
   const fetchSafeCells = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5000/api/safeshelves");
+      const response = await axios.get("https://back-production-08e5.up.railway.app/api/safeshelves");
       setSafeCells(response.data); // Обновляем состояние безопасных ячеек
     } catch (error) {
       console.error("Ошибка при загрузке данных о безопасных ячейках:", error);
