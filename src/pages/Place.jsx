@@ -4,6 +4,7 @@ import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import axios from "axios";
 import { API_SAFE_CELLS } from "../config/JS_apiConfig"; // Импортируем путь
 
+
 const Place = () => {
   const [safeCells, setSafeCells] = useState([]); // Состояние для безопасных ячеек
   const [selectedCellId, setSelectedCellId] = useState(null); // Состояние для отслеживания выбранной ячейки
@@ -19,7 +20,7 @@ const Place = () => {
       console.error("Ошибка при загрузке данных о безопасных ячейках:", error);
     }
   };
-  
+
   // Загружаем безопасные ячейки при монтировании компонента
   useEffect(() => {
     fetchSafeCells();

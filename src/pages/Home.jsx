@@ -23,10 +23,8 @@ import { ArrowForwardIcon, AtSignIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // Импортируем AuthContext
 import { useToast } from "@chakra-ui/react"; // Добавляем импорт useToast
+import { API_STATS, API_BOOKS_AVAILABLE, API_INVENTORY } from "../config/JS_apiConfig";
 
-const API_STATS = "https://back-production-08e5.up.railway.app/api/stats";
-const API_BOOKS_AVAILABLE = "https://back-production-08e5.up.railway.app/api/books/available";
-const API_INVENTORY = "https://back-production-08e5.up.railway.app/api/inventory";
 
 const Home = () => {
   const [stats, setStats] = useState(null); // Инициализируем null, чтобы проверить наличие данных
