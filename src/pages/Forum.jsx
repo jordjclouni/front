@@ -24,13 +24,16 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const API_TOPICS = "http://127.0.0.1:5000/api/topics";
+// Обновите API_TOPICS на URL вашего бэкенда
+const API_TOPICS = "https://back-production-bba3.up.railway.app/api/topics"; // Замените на реальный URL
+const API_TEST = "https://back-production-bba3.up.railway.app/api/test"; // Тестовый маршрут
 
 const Forum = () => {
   const [topics, setTopics] = useState([]);
   const [newTopic, setNewTopic] = useState({ title: "", description: "" });
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState("Checking..."); // Статус соединения
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
   const navigate = useNavigate();
@@ -39,10 +42,29 @@ const Forum = () => {
   const textColor = useColorModeValue("gray.800", "white");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
+  // Проверка соединения с бэкендом
   useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const response = await axios.get(API_TEST, { withCredentials: true });
+        setConnectionStatus("Connected to backend!");
+        console.log("Backend response:", response.data);
+      } catch (error) {
+        setConnectionStatus("Failed to connect to backend");
+        console.error("Error connecting to backend:", error.message);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось установить соединение с бэкендом",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+
     const fetchTopics = async () => {
       try {
-        const response = await axios.get(API_TOPICS);
+        const response = await axios.get(API_TOPICS, { withCredentials: true });
         setTopics(response.data);
       } catch (error) {
         toast({
@@ -56,7 +78,11 @@ const Forum = () => {
         setLoading(false);
       }
     };
-    if (!authLoading) fetchTopics();
+
+    if (!authLoading) {
+      checkConnection(); // Проверка соединения
+      fetchTopics();    // Загрузка тем
+    }
   }, [authLoading]);
 
   const handleInputChange = (e) => {
@@ -90,7 +116,7 @@ const Forum = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post(API_TOPICS, newTopic);
+      const response = await axios.post(API_TOPICS, newTopic, { withCredentials: true });
       setTopics([
         {
           id: response.data.id,
@@ -139,6 +165,10 @@ const Forum = () => {
         Форум
       </Heading>
 
+      <Text mb={2} color={textColor} fontSize="sm" textAlign="center">
+        Connection Status: {connectionStatus}
+      </Text>
+
       <Button
         colorScheme="teal"
         onClick={onOpen}
@@ -165,7 +195,7 @@ const Forum = () => {
               borderRadius="md"
               boxShadow="sm"
               _hover={{ boxShadow: "md", cursor: "pointer" }}
-              onClick={() => navigate(`/topic/${topic.id}`)} // Переход на страницу темы (можно доработать)
+              onClick={() => navigate(`/topic/${topic.id}`)}
             >
               <Text fontSize="lg" fontWeight="bold" color={textColor}>
                 {topic.title}
