@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import { API_URL } from "../config/JS_apiConfig";
+import { Spinner, Center } from "@chakra-ui/react"; // Для индикатора загрузки
 
 const AuthContext = createContext();
 
@@ -16,17 +17,23 @@ export const AuthProvider = ({ children }) => {
         const savedUser = localStorage.getItem("user");
         if (savedUser) {
           const parsedUser = JSON.parse(savedUser);
-          setUser(parsedUser); // Устанавливаем user с токеном
-          // Устанавливаем токен для axios
-          axios.defaults.headers.common['Authorization'] = `Bearer ${parsedUser.token}`;
+          if (parsedUser && parsedUser.token) { // Проверяем валидность данных
+            setUser(parsedUser); // Устанавливаем user с токеном
+            // Устанавливаем токен для axios (лучше передавать в запросах)
+            axios.defaults.headers.common["Authorization"] = `Bearer ${parsedUser.token}`;
+          } else {
+            setUser(null);
+            delete axios.defaults.headers.common["Authorization"];
+          }
         } else {
           setUser(null);
-          delete axios.defaults.headers.common['Authorization'];
+          delete axios.defaults.headers.common["Authorization"];
         }
       } catch (parseError) {
+        console.error("Ошибка парсинга данных авторизации:", parseError);
         setUser(null);
         localStorage.removeItem("user");
-        delete axios.defaults.headers.common['Authorization'];
+        delete axios.defaults.headers.common["Authorization"];
         setError("Ошибка загрузки данных авторизации.");
       } finally {
         setLoading(false);
@@ -41,12 +48,17 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_URL}/api/login`, { email, password });
+      const response = await axios.post(
+        `${API_URL}/api/login`,
+        { email, password },
+        { withCredentials: true } // Добавляем для поддержки сессий
+      );
       const { token, ...userData } = response.data; // Предполагается, что бэкенд возвращает { token, ...userData }
       const newUser = { ...userData, token };
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`; // Устанавливаем токен глобально
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Устанавливаем токен глобально
+      return true;
     } catch (error) {
       setError(error.response?.data?.message || "Ошибка входа.");
       throw error; // Пробрасываем ошибку для обработки в компоненте
@@ -60,7 +72,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setError(null);
     localStorage.removeItem("user");
-    delete axios.defaults.headers.common['Authorization'];
+    delete axios.defaults.headers.common["Authorization"];
   };
 
   const value = {
@@ -72,7 +84,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (loading) {
-    return null; // Или можно вернуть Spinner
+    return (
+      <Center height="100vh">
+        <Spinner size="lg" color="teal.500" />
+      </Center>
+    ); // Показываем индикатор загрузки
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
