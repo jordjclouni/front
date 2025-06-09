@@ -17,12 +17,12 @@ import axios from "axios";
 
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
-
-const API_INVENTORY = "http://127.0.0.1:5000/api/inventory";
-const API_BOOKS = "http://127.0.0.1:5000/api/books";
-const API_SHELVES = "http://127.0.0.1:5000/api/safeshelves";
-const API_AUTHORS = "http://127.0.0.1:5000/api/authors";
+const API_INVENTORY = `${API_BASE_URL}api/inventory`;
+const API_BOOKS = `${API_BASE_URL}api/books`;
+const API_SHELVES = `${API_BASE_URL}api/safeshelves`;
+const API_AUTHORS = `${API_BASE_URL}api/authors`;
 
 const Inventory = () => {
   const [books, setBooks] = useState([]);
@@ -172,7 +172,7 @@ const Inventory = () => {
   return (
     <Container maxW="600px" py={6}>
       <Heading mb={4} color={textColor} textAlign="center">
-        Мой инвентарь
+        Книги находящиеся у вас
       </Heading>
 
       <VStack

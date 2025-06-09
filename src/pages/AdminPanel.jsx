@@ -28,7 +28,7 @@ const AdminPanel = () => {
           <Button as={Link} to="/admin/authors" colorScheme="blue" variant="ghost">
             Авторы
           </Button>
-          <Button as={Link} to="/admin/books" colorScheme="blue" variant="ghost">
+          <Button as={Link} to="/admin/book" colorScheme="blue" variant="ghost">
             Книги
           </Button>
           <Button as={Link} to="/admin/users" colorScheme="blue" variant="ghost">

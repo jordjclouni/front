@@ -12,9 +12,10 @@ import {
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
-const API_BOOKS = "http://127.0.0.1:5000/api/books";
-const API_USERS = "http://127.0.0.1:5000/api/users";
+const API_BOOKS = `${API_BASE_URL}api/books`;
+const API_USERS = `${API_BASE_URL}api/users`;
 
 const BookExchange = () => {
   const [books, setBooks] = useState([]);

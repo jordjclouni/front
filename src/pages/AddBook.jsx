@@ -15,48 +15,61 @@ import {
   useColorModeValue,
   Box,
   Text,
-  Flex,
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
-const API_BOOKS = "http://127.0.0.1:5000/api/books";
-const API_AUTHORS = "http://127.0.0.1:5000/api/authors";
-const API_SHELVES = "http://127.0.0.1:5000/api/safeshelves";
-const API_GENRES = "http://127.0.0.1:5000/api/genres";
-const API_INVENTORY = "http://127.0.0.1:5000/api/inventory";
+const API_BOOKS = `${API_BASE_URL}api/books`;
+const API_AUTHORS = `${API_BASE_URL}api/authors`;
+const API_SHELVES = `${API_BASE_URL}api/safeshelves`;
+const API_GENRES = `${API_BASE_URL}api/genres`;
 
 const AddBook = () => {
+  const { user } = useAuth();
   const [form, setForm] = useState({
     title: "",
     author_id: "",
-    author_search: "", // Для поиска авторов
-    new_author_name: "", // Для создания нового автора
-    new_author_description: "", // Описание нового автора
+    author_search: "",
+    new_author_name: "",
+    new_author_description: "",
     description: "",
     safe_shelf_id: null,
     genre_ids: [],
     status: "in_hand",
+    user_id: user?.id || null,
+    isbn: "",
   });
 
   const [authors, setAuthors] = useState([]);
-  const [filteredAuthors, setFilteredAuthors] = useState([]); // Для автодополнения
+  const [filteredAuthors, setFilteredAuthors] = useState([]);
   const [shelves, setShelves] = useState([]);
   const [genres, setGenres] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAddingAuthor, setIsAddingAuthor] = useState(false); // Для состояния добавления автора
+  const [isAddingAuthor, setIsAddingAuthor] = useState(false);
+  const [isFetchingISBN, setIsFetchingISBN] = useState(false);
   const toast = useToast();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
   const bgColor = useColorModeValue("white", "gray.800");
   const textColor = useColorModeValue("gray.800", "white");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
   useEffect(() => {
+    if (!user || !user.id) {
+      toast({
+        title: "Ошибка",
+        description: "Пожалуйста, войдите в систему, чтобы добавить книгу",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate("/login");
+      return;
+    }
+
     const fetchData = async () => {
-      if (authLoading) return;
       try {
         await Promise.all([fetchAuthors(), fetchShelves(), fetchGenres()]);
       } catch (error) {
@@ -72,12 +85,17 @@ const AddBook = () => {
       }
     };
     fetchData();
-  }, [authLoading]);
+  }, [user, navigate, toast]);
+
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, user_id: user?.id || null }));
+  }, [user]);
 
   const fetchAuthors = async (searchTerm = "") => {
     try {
       const response = await axios.get(API_AUTHORS, {
         params: { search: searchTerm },
+        withCredentials: true,
       });
       setAuthors(response.data);
       setFilteredAuthors(response.data);
@@ -94,7 +112,7 @@ const AddBook = () => {
 
   const fetchShelves = async () => {
     try {
-      const response = await axios.get(API_SHELVES);
+      const response = await axios.get(API_SHELVES, { withCredentials: true });
       setShelves(response.data);
     } catch (error) {
       toast({
@@ -109,7 +127,7 @@ const AddBook = () => {
 
   const fetchGenres = async () => {
     try {
-      const response = await axios.get(API_GENRES);
+      const response = await axios.get(API_GENRES, { withCredentials: true });
       setGenres(response.data);
     } catch (error) {
       toast({
@@ -122,13 +140,42 @@ const AddBook = () => {
     }
   };
 
+  const fetchISBN = async () => {
+    if (!form.title.trim() || form.title.length < 3) {
+      setForm((prev) => ({ ...prev, isbn: "Введите больше символов" }));
+      return;
+    }
+
+    setIsFetchingISBN(true);
+    try {
+      const response = await axios.post(
+        `${API_BOOKS}/fetch-isbn`,
+        { title: form.title },
+        { withCredentials: true }
+      );
+      const { isbn } = response.data;
+      setForm((prev) => ({ ...prev, isbn: isbn || "ISBN не найден" }));
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось найти ISBN",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      console.error("Ошибка API:", error.response?.data || error.message);
+      setForm((prev) => ({ ...prev, isbn: "Ошибка поиска ISBN" }));
+    } finally {
+      setIsFetchingISBN(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value || (name === "safe_shelf_id" ? null : value) });
 
-    // Если изменяется поле поиска автора, фильтруем авторов
     if (name === "author_search") {
-      fetchAuthors(value); // Вызываем поиск авторов
+      fetchAuthors(value);
     }
   };
 
@@ -137,10 +184,10 @@ const AddBook = () => {
       ...form,
       author_id: author.id,
       author_search: author.name,
-      new_author_name: "", // Очищаем поле нового автора
+      new_author_name: "",
       new_author_description: "",
     });
-    setFilteredAuthors([]); // Скрываем список автодополнения
+    setFilteredAuthors([]);
   };
 
   const handleAddAuthor = async () => {
@@ -157,10 +204,14 @@ const AddBook = () => {
 
     setIsAddingAuthor(true);
     try {
-      const response = await axios.post(API_AUTHORS, {
-        name: form.new_author_name,
-        description: form.new_author_description || "",
-      });
+      const response = await axios.post(
+        API_AUTHORS,
+        {
+          name: form.new_author_name,
+          description: form.new_author_description || "",
+        },
+        { withCredentials: true }
+      );
 
       const newAuthor = response.data;
       setAuthors([...authors, { id: newAuthor.id, name: newAuthor.name, description: newAuthor.description }]);
@@ -171,7 +222,7 @@ const AddBook = () => {
         new_author_name: "",
         new_author_description: "",
       });
-      setFilteredAuthors([]); // Скрываем список автодополнения
+      setFilteredAuthors([]);
 
       toast({
         title: "Автор добавлен!",
@@ -204,17 +255,6 @@ const AddBook = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.title.trim() || !form.author_id || !form.description.trim()) {
-      toast({
-        title: "Ошибка",
-        description: "Название, автор и описание обязательны!",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
     if (!user || !user.id) {
       toast({
         title: "Ошибка",
@@ -224,6 +264,28 @@ const AddBook = () => {
         isClosable: true,
       });
       navigate("/login");
+      return;
+    }
+
+    if (!form.title.trim() || !form.author_id || !form.description.trim() || !form.isbn) {
+      toast({
+        title: "Ошибка",
+        description: "Название, автор, описание и ISBN обязательны!",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (form.isbn === "ISBN не найден" || form.isbn === "Книга не найдена" || form.isbn === "Ошибка поиска ISBN") {
+      toast({
+        title: "Ошибка",
+        description: "Пожалуйста, найдите действительный ISBN перед добавлением книги.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
       return;
     }
 
@@ -237,16 +299,14 @@ const AddBook = () => {
         user_id: user.id,
         genre_ids: form.genre_ids,
         status: form.status,
+        isbn: form.isbn,
       };
 
-      const bookResponse = await axios.post(API_BOOKS, payload);
-      const bookId = bookResponse.data.book_id;
-      const isbn = bookResponse.data.isbn;
-
-      await axios.post(API_INVENTORY, {
-        user_id: user.id,
-        book_id: bookId,
+      const bookResponse = await axios.post(API_BOOKS, payload, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
       });
+      const { book_id, isbn } = bookResponse.data;
 
       toast({
         title: "Книга добавлена!",
@@ -266,36 +326,22 @@ const AddBook = () => {
         safe_shelf_id: null,
         genre_ids: [],
         status: "in_hand",
+        user_id: user?.id || null,
+        isbn: "",
       });
       navigate("/profile");
     } catch (error) {
       const status = error.response?.status;
-      const message = error.response?.data?.error || "Не удалось добавить книгу";
+      const message = error.response?.data?.error || error.message || "Не удалось добавить книгу";
       if (status === 401) {
         toast({
-          title: "Ошибка",
+          title: "Ошибка авторизации",
           description: "Пожалуйста, войдите в систему",
           status: "error",
           duration: 3000,
           isClosable: true,
         });
         navigate("/login");
-      } else if (status === 400) {
-        toast({
-          title: "Ошибка",
-          description: message,
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
-      } else if (status === 403) {
-        toast({
-          title: "Ошибка",
-          description: "Недостаточно прав",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
       } else {
         toast({
           title: "Ошибка",
@@ -305,12 +351,13 @@ const AddBook = () => {
           isClosable: true,
         });
       }
+      console.error("Ошибка:", error.response?.data);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loadingData || authLoading) {
+  if (loadingData) {
     return (
       <Container maxW="600px" py={6} textAlign="center">
         <Spinner size="lg" color="teal.500" />
@@ -345,7 +392,20 @@ const AddBook = () => {
           _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
         />
 
-        {/* Поле поиска авторов */}
+        <Box>
+          <Text color={textColor}>ISBN: {form.isbn || "Нажмите кнопку для поиска"}</Text>
+          <Button
+            colorScheme="teal"
+            onClick={fetchISBN}
+            isLoading={isFetchingISBN}
+            loadingText="Поиск..."
+            mt={2}
+            _hover={{ bg: "teal.600" }}
+          >
+            Найти ISBN
+          </Button>
+        </Box>
+
         <Box position="relative">
           <Input
             placeholder="Поиск автора..."
@@ -388,7 +448,6 @@ const AddBook = () => {
           )}
         </Box>
 
-        {/* Поля для добавления нового автора */}
         <Input
           placeholder="Имя нового автора (если не нашли)"
           name="new_author_name"

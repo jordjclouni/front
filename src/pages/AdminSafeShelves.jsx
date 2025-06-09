@@ -15,6 +15,7 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "@chakra-ui/react";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
 const AdminSafeShelves = () => {
   const [shelves, setShelves] = useState([]);
@@ -38,7 +39,7 @@ const AdminSafeShelves = () => {
   // Загрузка списка безопасных ячеек
   const fetchShelves = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5000/api/safeshelves");
+      const response = await axios.get(`${API_BASE_URL}api/safeshelves`);
       setShelves(response.data);
     } catch (error) {
       console.error("Ошибка загрузки данных:", error);
@@ -72,7 +73,7 @@ const AdminSafeShelves = () => {
   const handleSubmit = async () => {
     try {
       if (form.id) {
-        await axios.put(`http://127.0.0.1:5000/api/safeshelves/${form.id}`, form);
+        await axios.put(`${API_BASE_URL}api/safeshelves/${form.id}`, form);
         toast({
           title: "Ячейка обновлена",
           status: "success",
@@ -80,7 +81,7 @@ const AdminSafeShelves = () => {
           isClosable: true,
         });
       } else {
-        await axios.post("http://127.0.0.1:5000/api/safeshelves", form);
+        await axios.post(`${API_BASE_URL}api/safeshelves`, form);
         toast({
           title: "Ячейка добавлена",
           status: "success",
@@ -108,7 +109,7 @@ const AdminSafeShelves = () => {
     if (!window.confirm("Вы уверены, что хотите удалить эту ячейку?")) return;
 
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/safeshelves/${form.id}`);
+      await axios.delete(`${API_BASE_URL}api/safeshelves/${form.id}`);
       toast({
         title: "Ячейка удалена",
         status: "info",
@@ -158,29 +159,7 @@ const AdminSafeShelves = () => {
 
   return (
     <Flex minH="100vh">
-      {/* Боковое меню */}
-      <Box width="250px" bg="gray.100" p="4" minH="100vh">
-        <Heading size="md" mb="4">
-          Админ-панель
-        </Heading>
-        <VStack align="start" spacing="4">
-          <Button as={Link} to="/admin/safe-shelves" colorScheme="blue" variant="ghost">
-            Безопасные ячейки
-          </Button>
-          <Button as={Link} to="/admin/genres" colorScheme="blue" variant="ghost">
-            Жанры
-          </Button>
-          <Button as={Link} to="/admin/authors" colorScheme="blue" variant="ghost">
-            Авторы
-          </Button>
-          <Button as={Link} to="/admin/books" colorScheme="blue" variant="ghost">
-            Книги
-          </Button>
-          <Button colorScheme="red" onClick={handleLogout}>
-            Выйти
-          </Button>
-        </VStack>
-      </Box>
+      
 
       {/* Основное содержимое */}
       <Box flex="1" p="6">

@@ -14,8 +14,9 @@ import {
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
-const API_TOPIC = "http://127.0.0.1:5000/api/topic";
+const API_TOPIC = `${API_BASE_URL}api/topic`;
 
 const TopicDiscussion = () => {
   const { id } = useParams();

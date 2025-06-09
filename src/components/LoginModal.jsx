@@ -69,7 +69,7 @@ const LoginModal = ({ isOpen, onClose }) => {
 
         // Перенаправление в зависимости от роли пользователя
         if (user.role_id === 1) {
-          navigate("/admin");
+          navigate("/admin/safe-shelves");
         } else {
           navigate("/profile");
         }

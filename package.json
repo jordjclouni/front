@@ -12,16 +12,15 @@
   "dependencies": {
     "@chakra-ui/icons": "^2.2.4",
     "@chakra-ui/react": "^2.8.2",
-
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@pbe/react-yandex-maps": "^1.2.5",
+    "axios": "^1.9.0",
     "framer-motion": "^11.11.17",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.2.1",
-    "react-router-dom": "^6.28.0",
-    "axios": "^1.7.2"
+    "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

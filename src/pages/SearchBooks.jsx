@@ -3,8 +3,9 @@ import {
   Container,
   Text,
   Box,
-  List,
-  ListItem,
+  SimpleGrid,
+  Card,
+  CardBody,
   Input,
   Select,
   HStack,
@@ -13,21 +14,36 @@ import {
   useColorModeValue,
   Textarea,
   VStack,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  FormControl,
+  FormLabel,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+  Link,
 } from "@chakra-ui/react";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import axios from "axios";
 import { SearchIcon, CloseIcon, AddIcon } from "@chakra-ui/icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-
-const API_BOOKS = "https://back-production-08e5.up.railway.app/api/books";
-const API_AUTHORS = "https://back-production-08e5.up.railway.app/api/authors";
-const API_SHELVES = "https://back-production-08e5.up.railway.app/api/safeshelves";
-const API_GENRES = "https://back-production-08e5.up.railway.app/api/genres";
-const API_INVENTORY = "https://back-production-08e5.up.railway.app/api/inventory";
-const API_LOGIN = "https://back-production-08e5.up.railway.app/api/login";
-const API_LOGOUT = "https://back-production-08e5.up.railway.app/api/logout";
-const API_SEND_EMAIL = "https://back-production-08e5.up.railway.app/api/send-email";
+import { API_BASE_URL } from '../config/JS_apiConfig';
+const API_BOOKS = `${API_BASE_URL}api/books`;
+const API_AUTHORS = `${API_BASE_URL}api/authors`;
+const API_SHELVES = `${API_BASE_URL}api/safeshelves`;
+const API_GENRES = `${API_BASE_URL}api/genres`;
+const API_INVENTORY = `${API_BASE_URL}api/inventory`;
+const API_LOGOUT = `${API_BASE_URL}api/logout`;
+const API_REVIEWS = `${API_BASE_URL}api/reviews`;
 
 const SearchBooks = () => {
   const [books, setBooks] = useState([]);
@@ -41,18 +57,22 @@ const SearchBooks = () => {
     genre_id: "",
   });
   const [selectedBookId, setSelectedBookId] = useState(null);
-  const [emailData, setEmailData] = useState({
-    email: "",
-    message: "",
+  const [reviewData, setReviewData] = useState({
+    book_id: null,
+    name: "",
+    text: "",
+    rating: 1,
   });
   const refs = useRef([]);
   const apiKey = "6ad7e365-54e3-4482-81b5-bd65125aafbf";
   const toast = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isOpen: isReviewOpen, onOpen: onReviewOpen, onClose: onReviewClose } = useDisclosure();
   const bgColor = useColorModeValue("white", "gray.800");
   const textColor = useColorModeValue("gray.800", "white");
   const borderColor = useColorModeValue("gray.200", "gray.700");
+  const cardBg = useColorModeValue("gray.50", "gray.700");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +95,11 @@ const SearchBooks = () => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Обновляем reviewData.name при изменении user
+    setReviewData((prev) => ({ ...prev, name: user?.name || "" }));
+  }, [user]);
 
   const fetchBooks = async () => {
     try {
@@ -154,7 +179,7 @@ const SearchBooks = () => {
     fetchBooks();
   };
 
-  const handleListItemClick = (id) => {
+  const handleCardClick = (id) => {
     setSelectedBookId(id);
     scrollToBook(id);
   };
@@ -247,15 +272,33 @@ const SearchBooks = () => {
     }
   };
 
-  const handleEmailChange = (e) => {
-    setEmailData({ ...emailData, [e.target.name]: e.target.value });
-  };
-
-  const sendEmailWithTable = async () => {
-    if (!emailData.email || !emailData.message) {
+  const openReviewModal = (book) => {
+    if (!user || !user.id) {
       toast({
         title: "Ошибка",
-        description: "Пожалуйста, заполните email и сообщение",
+        description: "Пожалуйста, войдите в систему, чтобы оставить отзыв",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate("/login");
+      return;
+    }
+
+    setReviewData({
+      book_id: book.id,
+      name: user.name || "",
+      text: "",
+      rating: 1,
+    });
+    onReviewOpen();
+  };
+
+  const submitReview = async () => {
+    if (!reviewData.text || !reviewData.name) {
+      toast({
+        title: "Ошибка",
+        description: "Пожалуйста, заполните все поля",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -263,48 +306,33 @@ const SearchBooks = () => {
       return;
     }
 
-    // Формируем список книг с полной информацией
-    const booksToSend = books.map((book) => ({
-      title: book.title,
-      author: authors.find((a) => a.id === book.author_id)?.name || "Неизвестен",
-      isbn: book.isbn,
-      genres: book.genres
-        .map((genreId) => genres.find((genre) => genre.id === genreId)?.name)
-        .filter(Boolean)
-        .join(", ") || "Не указаны",
-      shelf: shelves.find((s) => s.id === book.safe_shelf_id)?.name || "Не указано",
-    }));
-
-    const payload = {
-      email: emailData.email,
-      message: emailData.message,
-      books: booksToSend,
-    };
-
     try {
-      const response = await axios.post(API_SEND_EMAIL, payload, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+      const response = await axios.post(API_REVIEWS, {
+        book_id: reviewData.book_id,
+        user_id: user.id,
+        name: reviewData.name,
+        text: reviewData.text,
+        rating: reviewData.rating,
       });
+      console.log("Ответ от сервера:", response.data);
       toast({
         title: "Успех",
-        description: "Письмо с таблицей успешно отправлено",
+        description: "Отзыв успешно добавлен",
         status: "success",
         duration: 3000,
         isClosable: true,
       });
-      setEmailData({ email: "", message: "" });
+      onReviewClose();
+      setReviewData({ book_id: null, name: "", text: "", rating: 1 });
     } catch (error) {
+      console.error("Ошибка при отправке отзыва:", error.response?.data || error.message);
       toast({
         title: "Ошибка",
-        description: error.response?.data?.error || "Не удалось отправить письмо",
+        description: error.response?.data?.error || "Не удалось добавить отзыв",
         status: "error",
         duration: 3000,
         isClosable: true,
       });
-      console.error("Ошибка отправки email:", error);
     }
   };
 
@@ -313,8 +341,6 @@ const SearchBooks = () => {
       <Text fontSize="4xl" fontWeight="bold" mb={4} color={textColor}>
         Поиск книг
       </Text>
-
-      
 
       <HStack spacing={3} mb={4}>
         <Input
@@ -434,98 +460,148 @@ const SearchBooks = () => {
       </Box>
 
       <Box mt={4}>
-        <Text fontSize="xl" fontWeight="bold" color={textColor}>
+        <Text fontSize="xl" fontWeight="bold" mb={4} color={textColor}>
           Список книг
         </Text>
-        <List spacing={3} mt={4} overflowY="auto" maxH="400px">
-          {books.length === 0 ? (
-            <Text color={textColor}>Книги не найдены</Text>
-          ) : (
-            books.map((book, index) => (
-              <ListItem
+        {books.length === 0 ? (
+          <Text color={textColor}>Книги не найдены</Text>
+        ) : (
+          <SimpleGrid columns={1} spacing={6}>
+            {books.map((book, index) => (
+              <Card
                 key={book.id}
                 ref={(el) => (refs.current[index] = el)}
-                p={4}
-                borderWidth={1}
-                borderColor={selectedBookId === book.id ? "teal.300" : borderColor}
+                bg={selectedBookId === book.id ? "teal.700" : cardBg}
                 borderRadius="md"
-                bg={selectedBookId === book.id ? "teal.700" : useColorModeValue("gray.800", "gray.700")}
-                color="white"
+                borderWidth="1px"
+                borderColor={selectedBookId === book.id ? "teal.300" : borderColor}
                 _hover={{
                   bg: "teal.600",
-                  color: "white",
+                  transform: "translateY(-4px)",
+                  transition: "all 0.3s",
                 }}
-                onClick={() => handleListItemClick(book.id)}
+                onClick={() => handleCardClick(book.id)}
               >
-                <Text fontSize="lg" fontWeight="semibold" color="white">
-                  {book.title}
-                </Text>
-                <Text color="white">
-                  Автор: {authors.find((a) => a.id === book.author_id)?.name || "Неизвестен"}
-                </Text>
-                <Text color="white">ISBN: {book.isbn}</Text>
-                <Text color="white">
-                  Жанры:{" "}
-                  {book.genres
-                    .map((genreId) => genres.find((genre) => genre.id === genreId)?.name)
-                    .filter(Boolean)
-                    .join(", ") || "Не указаны"}
-                </Text>
-                <Text color="white">
-                  Место хранения:{" "}
-                  {shelves.find((s) => s.id === book.safe_shelf_id)?.name || "Не указано"}
-                </Text>
-                <Text fontSize="sm" color="white">
-                  {book.description || "Описание отсутствует"}
-                </Text>
-                <Button
-                  colorScheme="teal"
-                  leftIcon={<AddIcon />}
-                  mt={2}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addToInventory(book.id);
-                  }}
-                  isDisabled={book.status !== "available"}
-                >
-                  Добавить в инвентарь
-                </Button>
-              </ListItem>
-            ))
-          )}
-        </List>
+                <CardBody p={6}>
+                  <VStack align="start" spacing={4}>
+                    <Link as={RouterLink} to={`/book/${book.id}`}>
+                      <Text fontSize="2xl" fontWeight="bold" color={textColor} _hover={{ color: "blue.500" }}>
+                        {book.title}
+                      </Text>
+                    </Link>
+                    <Text fontSize="md" color={textColor}>
+                      <strong>Автор:</strong>{" "}
+                      {authors.find((a) => a.id === book.author_id)?.name || "Неизвестен"}
+                    </Text>
+                    <Text fontSize="md" color={textColor}>
+                      <strong>ISBN:</strong> {book.isbn}
+                    </Text>
+                    <Text fontSize="md" color={textColor}>
+                      <strong>Жанры:</strong>{" "}
+                      {book.genres
+                        .map((genreId) => genres.find((genre) => genre.id === genreId)?.name)
+                        .filter(Boolean)
+                        .join(", ") || "Не указаны"}
+                    </Text>
+                    <Text fontSize="md" color={textColor}>
+                      <strong>Место хранения:</strong>{" "}
+                      {shelves.find((s) => s.id === book.safe_shelf_id)?.name || "Не указано"}
+                    </Text>
+                    <Text fontSize="sm" color={textColor} noOfLines={3}>
+                      {book.description || "Описание отсутствует"}
+                    </Text>
+                    <HStack spacing={3}>
+                      <Button
+                        colorScheme="teal"
+                        leftIcon={<AddIcon />}
+                        size="md"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToInventory(book.id);
+                        }}
+                        isDisabled={book.status !== "available"}
+                      >
+                        Добавить в инвентарь
+                      </Button>
+                      <Button
+                        colorScheme="purple"
+                        size="md"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openReviewModal(book);
+                        }}
+                      >
+                        Оставить отзыв
+                      </Button>
+                    </HStack>
+                  </VStack>
+                </CardBody>
+              </Card>
+            ))}
+          </SimpleGrid>
+        )}
       </Box>
 
-      <Box mt={6} p={4} borderWidth={1} borderRadius="md" borderColor={borderColor}>
-        <Text fontSize="xl" fontWeight="bold" mb={4} color={textColor}>
-          Отправить список книг на email
-        </Text>
-        <VStack spacing={4}>
-          <Input
-            placeholder="Введите email"
-            name="email"
-            value={emailData.email}
-            onChange={handleEmailChange}
-            bg={useColorModeValue("gray.100", "gray.600")}
-            color={textColor}
-          />
-          <Textarea
-            placeholder="Введите сообщение"
-            name="message"
-            value={emailData.message}
-            onChange={handleEmailChange}
-            bg={useColorModeValue("gray.100", "gray.600")}
-            color={textColor}
-          />
-          <Button
-            colorScheme="teal"
-            onClick={sendEmailWithTable}
-            isDisabled={books.length === 0}
-          >
-            Отправить таблицу на email
-          </Button>
-        </VStack>
-      </Box>
+      {/* Модальное окно для добавления отзыва */}
+      <Modal isOpen={isReviewOpen} onClose={onReviewClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Оставить отзыв</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4}>
+              <Text>
+                Отзыв для книги «
+                {books.find((b) => b.id === reviewData?.book_id)?.title || "Не выбрано"}»
+              </Text>
+              <FormControl isRequired>
+                <FormLabel>Ваше имя</FormLabel>
+                <Input
+                  value={reviewData.name}
+                  isReadOnly={true}
+                  bg={useColorModeValue("gray.100", "gray.600")}
+                  color={textColor}
+                  placeholder="Имя будет автоматически заполнено после входа"
+                />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Текст отзыва</FormLabel>
+                <Textarea
+                  placeholder="Ваш отзыв..."
+                  value={reviewData.text}
+                  onChange={(e) => setReviewData({ ...reviewData, text: e.target.value })}
+                  bg={useColorModeValue("gray.100", "gray.600")}
+                  color={textColor}
+                  rows={5}
+                />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Рейтинг (1-5)</FormLabel>
+                <NumberInput
+                  min={1}
+                  max={5}
+                  value={reviewData.rating}
+                  onChange={(value) => setReviewData({ ...reviewData, rating: parseInt(value) })}
+                >
+                  <NumberInputField />
+                  <NumberInputStepper>
+                    <NumberIncrementStepper />
+                    <NumberDecrementStepper />
+                  </NumberInputStepper>
+                </NumberInput>
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="purple" mr={3} onClick={submitReview}>
+              Отправить отзыв
+            </Button>
+            <Button variant="outline" onClick={onReviewClose}>
+              Отмена
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Container>
   );
 };

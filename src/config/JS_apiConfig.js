@@ -1,2 +1,3 @@
-export const API_URL = "https://back-production-08e5.up.railway.app";
+const API_BASE_URL = "http://127.0.0.1:5000/";
 
+export { API_BASE_URL };

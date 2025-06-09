@@ -16,9 +16,10 @@ import {
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
-const API_USER_PROFILE = "http://127.0.0.1:5000/api/user/profile";
-const API_USER_AVATAR = "http://127.0.0.1:5000/api/user/avatar";
+const API_USER_PROFILE = `${API_BASE_URL}api/user/profile`;
+const API_USER_AVATAR = `${API_BASE_URL}api/user/avatar`;
 
 const EditProfile = () => {
   const [profile, setProfile] = useState({

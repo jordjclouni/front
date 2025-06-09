@@ -19,8 +19,8 @@ import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-
-const API_URL = "http://127.0.0.1:5000/api/genres";
+import { API_BASE_URL } from '../config/JS_apiConfig';
+const API_URL = `${API_BASE_URL}api/genres`;
 
 const AdminGenres = () => {
   const [genres, setGenres] = useState([]);
@@ -150,28 +150,7 @@ const AdminGenres = () => {
   return (
     <Flex minH="100vh">
       {/* Боковое меню */}
-      <Box width="250px" bg="gray.100" p="4" minH="100vh">
-        <Heading size="md" mb="4">
-          Админ-панель
-        </Heading>
-        <VStack align="start" spacing="4">
-          <Button as={Link} to="/admin/safe-shelves" colorScheme="blue" variant="ghost">
-            Безопасные ячейки
-          </Button>
-          <Button as={Link} to="/admin/genres" colorScheme="blue" variant="ghost">
-            Жанры
-          </Button>
-          <Button as={Link} to="/admin/authors" colorScheme="blue" variant="ghost">
-            Авторы
-          </Button>
-          <Button as={Link} to="/admin/books" colorScheme="blue" variant="ghost">
-            Книги
-          </Button>
-          <Button colorScheme="red" onClick={handleLogout}>
-            Выйти
-          </Button>
-        </VStack>
-      </Box>
+      
 
       {/* Основное содержимое */}
       <Box flex="1" p="6">

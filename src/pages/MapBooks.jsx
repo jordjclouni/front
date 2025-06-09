@@ -16,10 +16,11 @@ import axios from "axios";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import { useNavigate } from "react-router-dom";
 import { CheckIcon, ArrowForwardIcon } from "@chakra-ui/icons";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
-const API_BOOKS_AVAILABLE = "http://127.0.0.1:5000/api/books/available";
-const API_BOOKS_RESERVE = "http://127.0.0.1:5000/api/books/reserve";
-const API_BOOKS_TAKE = "http://127.0.0.1:5000/api/books/take";
+const API_BOOKS_AVAILABLE = `${API_BASE_URL}api/books/available`;
+const API_BOOKS_RESERVE = `${API_BASE_URL}api/books/reserve`;
+const API_BOOKS_TAKE = `${API_BASE_URL}api/books/take`;
 
 const MapBooks = () => {
   const [books, setBooks] = useState([]);

@@ -19,37 +19,62 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
+  SimpleGrid,
+  Badge,
+  Flex,
+  Avatar,
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
-const API_BOOKS = "http://127.0.0.1:5000/api/books";
-const API_REVIEWS = "http://127.0.0.1:5000/api/reviews";
+const API_BOOKS = `${API_BASE_URL}api/books`;
+const API_REVIEWS = `${API_BASE_URL}api/reviews`;
 
 const BookPage = () => {
   const { id } = useParams();
-  const [book, setBook] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState({ text: "", rating: "" });
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const toast = useToast();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { user, loading: authLoading, authFetch } = useAuth();
+  
+  const [state, setState] = useState({
+    book: null,
+    reviews: [],
+    loading: true,
+    error: null,
+    isSubmitting: false,
+    newReview: { text: "", rating: "" }
+  });
+
   const bgColor = useColorModeValue("white", "gray.800");
   const textColor = useColorModeValue("gray.800", "white");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
   useEffect(() => {
+    if (authLoading) return;
+
     const fetchBookData = async () => {
       try {
-        const bookResponse = await axios.get(`${API_BOOKS}/${id}`);
-        const reviewsResponse = await axios.get(`${API_REVIEWS}/${id}`);
-        setBook(bookResponse.data);
-        setReviews(reviewsResponse.data);
+        const [bookResponse, reviewsResponse] = await Promise.all([
+          axios.get(`${API_BOOKS}/${id}`),
+          axios.get(`${API_REVIEWS}/${id}`)
+        ]);
+        
+        setState(prev => ({
+          ...prev,
+          book: bookResponse.data,
+          reviews: reviewsResponse.data,
+          loading: false
+        }));
       } catch (error) {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: error.response?.data?.error || "Не удалось загрузить данные о книге"
+        }));
+        
         toast({
           title: "Ошибка",
           description: "Не удалось загрузить данные о книге",
@@ -57,36 +82,39 @@ const BookPage = () => {
           duration: 3000,
           isClosable: true,
         });
-        navigate("/");
-      } finally {
-        setLoading(false);
+        
+        navigate("/books");
       }
     };
-    if (!authLoading) fetchBookData();
-  }, [id, authLoading]);
 
-  const handleReviewInputChange = (e) => {
+    fetchBookData();
+  }, [id, authLoading, navigate, toast]);
+
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewReview({ ...newReview, [name]: value });
+    setState(prev => ({
+      ...prev,
+      newReview: { ...prev.newReview, [name]: value }
+    }));
   };
 
   const handleAddReview = async () => {
     if (!user) {
       toast({
-        title: "Ошибка",
-        description: "Пожалуйста, войдите в систему, чтобы оставить отзыв",
-        status: "error",
+        title: "Требуется авторизация",
+        description: "Пожалуйста, войдите, чтобы оставить отзыв",
+        status: "warning",
         duration: 3000,
         isClosable: true,
       });
-      navigate("/login");
-      return;
+      return navigate("/login", { state: { from: `/books/${id}` } });
     }
 
-    if (!newReview.text.trim() || !newReview.rating) {
+    const { text, rating } = state.newReview;
+    if (!text.trim() || !rating) {
       toast({
-        title: "Ошибка",
-        description: "Текст отзыва и рейтинг обязательны",
+        title: "Неполные данные",
+        description: "Заполните текст и выберите рейтинг",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -94,165 +122,212 @@ const BookPage = () => {
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      await axios.post(API_REVIEWS, {
-        book_id: id,
-        text: newReview.text,
-        rating: parseInt(newReview.rating),
+      setState(prev => ({ ...prev, isSubmitting: true }));
+      
+      const response = await authFetch(API_REVIEWS, {
+        method: "POST",
+        data: {
+          book_id: id,
+          text: text.trim(),
+          rating: parseInt(rating)
+        }
       });
-      setReviews([
-        {
+
+      setState(prev => ({
+        ...prev,
+        reviews: [{
           book_id: id,
           user_id: user.id,
           name: user.name,
-          text: newReview.text,
-          rating: parseInt(newReview.rating),
-        },
-        ...reviews,
-      ]);
-      setNewReview({ text: "", rating: "" });
+          avatar_url: user.avatar_url,
+          text: text.trim(),
+          rating: parseInt(rating),
+          created_at: new Date().toISOString()
+        }, ...prev.reviews],
+        newReview: { text: "", rating: "" },
+        isSubmitting: false
+      }));
+
       onClose();
       toast({
-        title: "Отзыв добавлен!",
+        title: "Спасибо!",
         description: "Ваш отзыв успешно добавлен",
         status: "success",
         duration: 3000,
         isClosable: true,
       });
     } catch (error) {
-      const message = error.response?.data?.error || "Не удалось добавить отзыв";
+      setState(prev => ({ ...prev, isSubmitting: false }));
+      
       toast({
         title: "Ошибка",
-        description: message,
+        description: error.response?.data?.error || "Не удалось добавить отзыв",
         status: "error",
         duration: 3000,
         isClosable: true,
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  if (loading || authLoading) {
+  if (state.loading || authLoading) {
     return (
-      <Container maxW="800px" py={6} textAlign="center">
-        <Spinner size="lg" color="teal.500" />
+      <Container maxW="800px" py={10} centerContent>
+        <Spinner size="xl" color="teal.500" thickness="4px" />
+        <Text mt={4} color={textColor}>Загрузка данных о книге...</Text>
       </Container>
     );
   }
 
-  if (!book) {
+  if (state.error || !state.book) {
     return (
-      <Container maxW="800px" py={6} textAlign="center">
-        <Text color={textColor}>Книга не найдена</Text>
+      <Container maxW="800px" py={10} centerContent>
+        <Text color="red.500" fontSize="lg">{state.error || "Книга не найдена"}</Text>
+        <Button mt={4} colorScheme="teal" onClick={() => navigate("/books")}>
+          Вернуться к списку книг
+        </Button>
       </Container>
     );
   }
 
   return (
     <Container maxW="800px" py={6}>
-      <Heading mb={4} color={textColor} textAlign="center">
-        {book.title}
-      </Heading>
+      {/* Заголовок и основная информация */}
+      <Flex direction="column" gap={6}>
+        <Heading as="h1" size="xl" color={textColor} textAlign="center">
+          {state.book.title}
+        </Heading>
 
-      <Box
-        p={4}
-        bg={bgColor}
-        borderWidth={1}
-        borderColor={borderColor}
-        borderRadius="md"
-        boxShadow="sm"
-        mb={6}
-      >
-        <Text fontSize="lg" fontWeight="bold" color={textColor}>
-          О книге
-        </Text>
-        <Text color={textColor}>Автор: {book.author?.name || "Неизвестный автор"}</Text>
-        <Text color={textColor}>Жанры: {book.genres?.join(", ") || "Не указаны"}</Text>
-        <Text color={textColor}>ISBN: {book.isbn}</Text>
-        <Text color={textColor}>Описание: {book.description}</Text>
-        <Text color={textColor}>
-          Статус: {book.status === "available" ? "Доступна" : "У пользователя"}
-        </Text>
-        {book.shelf_location && (
-          <Text color={textColor}>
-            Местоположение: {book.shelf_location.name}, {book.shelf_location.address}
-          </Text>
-        )}
-      </Box>
-
-      <Heading size="md" mb={4} color={textColor}>
-        Отзывы
-      </Heading>
-
-      <Button
-        colorScheme="teal"
-        onClick={onOpen}
-        mb={4}
-        width="full"
-        _hover={{ bg: "teal.600" }}
-      >
-        Оставить отзыв
-      </Button>
-
-      <VStack spacing={4} align="stretch">
-        {reviews.length === 0 ? (
-          <Text color={textColor} textAlign="center">
-            Отзывов пока нет. Будьте первым!
-          </Text>
-        ) : (
-          reviews.map((review, index) => (
-            <Box
-              key={index}
-              p={4}
-              bg={bgColor}
-              borderWidth={1}
-              borderColor={borderColor}
-              borderRadius="md"
-              boxShadow="sm"
-            >
-              <Text fontWeight="bold" color={textColor}>
-                {review.name}
+        <Box
+          p={6}
+          bg={bgColor}
+          borderRadius="lg"
+          boxShadow="md"
+          borderWidth="1px"
+          borderColor={borderColor}
+        >
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            <Box>
+              <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                Автор: <Badge colorScheme="blue">{state.book.author?.name || "Неизвестен"}</Badge>
               </Text>
-              <Text color={textColor}>Рейтинг: {review.rating}/5</Text>
-              <Text color={textColor}>{review.text}</Text>
+              <Text mt={2} color={textColor}>
+                <strong>Жанры:</strong> {state.book.genres?.join(", ") || "Не указаны"}
+              </Text>
+              <Text color={textColor}>
+                <strong>ISBN:</strong> {state.book.isbn || "Не указан"}
+              </Text>
+              <Text color={textColor}>
+                <strong>Статус:</strong>{" "}
+                <Badge colorScheme={state.book.status === "available" ? "green" : "orange"}>
+                  {state.book.status === "available" ? "Доступна" : "У пользователя"}
+                </Badge>
+              </Text>
+              {state.book.shelf_location && (
+                <Text color={textColor}>
+                  <strong>Местоположение:</strong> {state.book.shelf_location.address}
+                </Text>
+              )}
             </Box>
-          ))
-        )}
-      </VStack>
 
-      {/* Модальное окно для добавления отзыва */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+            <Box>
+              <Text fontWeight="bold" color={textColor} mb={2}>
+                Описание:
+              </Text>
+              <Text color={textColor}>
+                {state.book.description || "Описание отсутствует"}
+              </Text>
+            </Box>
+          </SimpleGrid>
+        </Box>
+
+        {/* Блок отзывов */}
+        <Box>
+          <Flex justify="space-between" align="center" mb={4}>
+            <Heading as="h2" size="md" color={textColor}>
+              Отзывы ({state.reviews.length})
+            </Heading>
+            <Button
+              colorScheme="teal"
+              onClick={onOpen}
+              size="sm"
+              _hover={{ bg: "teal.600" }}
+            >
+              Оставить отзыв
+            </Button>
+          </Flex>
+
+          {state.reviews.length === 0 ? (
+            <Box textAlign="center" py={8}>
+              <Text color={textColor} fontSize="lg">
+                Пока нет отзывов. Будьте первым!
+              </Text>
+            </Box>
+          ) : (
+            <VStack spacing={4} align="stretch">
+              {state.reviews.map((review, index) => (
+                <Box
+                  key={`${review.user_id}-${index}`}
+                  p={4}
+                  bg={bgColor}
+                  borderRadius="md"
+                  boxShadow="sm"
+                  borderWidth="1px"
+                  borderColor={borderColor}
+                >
+                  <Flex align="center" gap={3} mb={2}>
+                    <Avatar
+                      size="sm"
+                      name={review.name}
+                      src={review.avatar_url}
+                    />
+                    <Text fontWeight="bold" color={textColor}>
+                      {review.name}
+                    </Text>
+                    <Badge colorScheme="yellow" ml="auto">
+                      {review.rating}/5
+                    </Badge>
+                  </Flex>
+                  <Text color={textColor}>{review.text}</Text>
+                </Box>
+              ))}
+            </VStack>
+          )}
+        </Box>
+      </Flex>
+
+      {/* Модальное окно отзыва */}
+      <Modal isOpen={isOpen} onClose={onClose} size="lg">
         <ModalOverlay />
         <ModalContent bg={bgColor}>
-          <ModalHeader color={textColor}>Оставить отзыв</ModalHeader>
+          <ModalHeader color={textColor}>Ваш отзыв</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <VStack spacing={3}>
+            <VStack spacing={4}>
               <Textarea
-                placeholder="Ваш отзыв"
+                placeholder="Расскажите о вашем впечатлении от книги..."
                 name="text"
-                value={newReview.text}
-                onChange={handleReviewInputChange}
-                bg={useColorModeValue("gray.100", "gray.600")}
+                value={state.newReview.text}
+                onChange={handleInputChange}
+                minH="150px"
+                bg={useColorModeValue("gray.50", "gray.700")}
                 color={textColor}
                 borderColor={borderColor}
-                _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
+                _focus={{ borderColor: "teal.500" }}
               />
               <Select
-                placeholder="Выберите рейтинг"
+                placeholder="Оцените книгу"
                 name="rating"
-                value={newReview.rating}
-                onChange={handleReviewInputChange}
-                bg={useColorModeValue("gray.100", "gray.600")}
+                value={state.newReview.rating}
+                onChange={handleInputChange}
+                bg={useColorModeValue("gray.50", "gray.700")}
                 color={textColor}
                 borderColor={borderColor}
-                _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
+                _focus={{ borderColor: "teal.500" }}
               >
-                {[1, 2, 3, 4, 5].map((num) => (
+                {[5, 4, 3, 2, 1].map((num) => (
                   <option key={num} value={num}>
-                    {num}
+                    {"⭐".repeat(num)} ({num}/5)
                   </option>
                 ))}
               </Select>
@@ -260,17 +335,21 @@ const BookPage = () => {
           </ModalBody>
           <ModalFooter>
             <Button
+              variant="ghost"
+              onClick={onClose}
+              mr={3}
+              color={textColor}
+            >
+              Отмена
+            </Button>
+            <Button
               colorScheme="teal"
               onClick={handleAddReview}
-              isLoading={isSubmitting}
+              isLoading={state.isSubmitting}
               loadingText="Отправка..."
-              mr={3}
-              _hover={{ bg: "teal.600" }}
+              isDisabled={!state.newReview.text.trim() || !state.newReview.rating}
             >
-              Отправить
-            </Button>
-            <Button variant="ghost" onClick={onClose} color={textColor}>
-              Отмена
+              Опубликовать
             </Button>
           </ModalFooter>
         </ModalContent>
