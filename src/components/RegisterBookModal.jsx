@@ -50,7 +50,7 @@ const RegisterBookModal = ({ isOpen, onClose }) => {
 
     try {
       // Отправка данных на сервер
-      const response = await fetch("http://127.0.0.1:5000/api/add_book", {
+      const response = await fetch(`${API_BASE_URL}api/add_book`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
