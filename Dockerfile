@@ -12,9 +12,8 @@ RUN npm run build
 # Отдаём через nginx
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html 
 
-# Устанавливаем порт из переменной окружения Railway
 ARG PORT=80
 EXPOSE $PORT
 CMD ["nginx", "-g", "daemon off;"]
