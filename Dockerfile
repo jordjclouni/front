@@ -1,12 +1,10 @@
-# Сборка React-приложения
 FROM node:20 as build
 
-RUN apt-get update && apt-get install -y npm  # Установка npm для Debian-based
-# Или для Alpine: RUN apk add --no-cache npm  # Если используется node:20-alpine
+RUN echo "Node version: $(node -v)"
+RUN npm -v || { echo "npm not found"; cat /etc/os-release; exit 1; }  # Показать ОС
 
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm -v || { echo "npm not found"; exit 1; }
 RUN npm install
 COPY . .
 ARG REACT_APP_API_URL
