@@ -11,6 +11,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 
+
 const About = () => {
   return (
     <Container maxW="container.xl" py={4}>
