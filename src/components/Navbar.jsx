@@ -26,6 +26,7 @@ import { SunIcon, MoonIcon, HamburgerIcon, ChevronDownIcon } from "@chakra-ui/ic
 import LoginModal from "./LoginModal";
 import RegisterModal from "./RegisterModal";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
 const Navbar = () => {
   const { colorMode, toggleColorMode } = useColorMode();
