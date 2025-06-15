@@ -13,6 +13,7 @@ import {
   Button,
   useToast,
 } from "@chakra-ui/react";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
 const RegisterBookModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({

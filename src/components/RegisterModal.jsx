@@ -15,6 +15,7 @@ import {
   FormErrorMessage,
 } from "@chakra-ui/react";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from '../config/JS_apiConfig';
 
 const RegisterModal = ({ isOpen, onClose }) => {
   const { login } = useAuth();
