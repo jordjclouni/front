@@ -53,12 +53,14 @@ const Inventory = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token"); // Получаем токен
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "X-User-Id": user.id, // Передаем user.id только если он есть
+        };
         const [inventoryResponse, shelvesResponse, authorsResponse] = await Promise.all([
-          axios.get(`${API_INVENTORY}/${user.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(API_SHELVES, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(API_AUTHORS, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${API_INVENTORY}/${user.id}`, { headers }),
+          axios.get(API_SHELVES, { headers }),
+          axios.get(API_AUTHORS, { headers }),
         ]);
         setBooks(inventoryResponse.data.map((entry) => entry.book));
         setShelves(shelvesResponse.data);
@@ -66,10 +68,11 @@ const Inventory = () => {
       } catch (inventoryError) {
         try {
           const token = localStorage.getItem("token");
+          const headers = { Authorization: `Bearer ${token}`, "X-User-Id": user.id };
           const [booksResponse, shelvesResponse, authorsResponse] = await Promise.all([
-            axios.get(API_BOOKS, { headers: { Authorization: `Bearer ${token}` } }),
-            axios.get(API_SHELVES, { headers: { Authorization: `Bearer ${token}` } }),
-            axios.get(API_AUTHORS, { headers: { Authorization: `Bearer ${token}` } }),
+            axios.get(API_BOOKS, { headers }),
+            axios.get(API_SHELVES, { headers }),
+            axios.get(API_AUTHORS, { headers }),
           ]);
           setBooks(
             booksResponse.data.filter(
@@ -119,6 +122,7 @@ const Inventory = () => {
 
     try {
       const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}`, "X-User-Id": user.id };
       const response = await axios.put(
         `${API_BOOKS}/${bookId}/release`,
         {
@@ -126,9 +130,7 @@ const Inventory = () => {
           status: "available",
           safe_shelf_id: parseInt(shelfId),
         },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers }
       );
 
       setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
@@ -161,8 +163,8 @@ const Inventory = () => {
   if (error) {
     return (
       <Container maxW="600px" py={6} textAlign="center">
-      <Text color={textColor}>{error}</Text>
-    </Container>
+        <Text color={textColor}>{error}</Text>
+      </Container>
     );
   }
 
@@ -171,7 +173,6 @@ const Inventory = () => {
       <Heading mb={4} color={textColor} textAlign="center">
         Книги находящиеся у вас
       </Heading>
-
       <VStack
         spacing={4}
         align="stretch"
@@ -200,7 +201,6 @@ const Inventory = () => {
                 <Text color={textColor}>
                   Автор: {book.author_id ? authors.find((a) => a.id === book.author_id)?.name || "Неизвестен" : "Неизвестен"}
                 </Text>
-
                 <Box mt={2}>
                   <Select
                     placeholder="Выберите ячейку"
@@ -217,7 +217,6 @@ const Inventory = () => {
                     ))}
                   </Select>
                 </Box>
-
                 <Button
                   colorScheme="teal"
                   onClick={() => releaseBook(book.id)}
