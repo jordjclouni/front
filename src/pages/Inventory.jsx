@@ -39,7 +39,7 @@ const Inventory = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user?.id) {
+    if (!user || !user.id) {
       toast({
         title: "Ошибка",
         description: "Пожалуйста, войдите в систему для просмотра инвентаря",
@@ -50,6 +50,7 @@ const Inventory = () => {
       navigate("/login");
       return;
     }
+  } , [authLoading, user, toast, navigate]);
 
     const fetchData = async () => {
       try {
