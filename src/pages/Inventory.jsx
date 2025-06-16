@@ -1,3 +1,4 @@
+// src/pages/Inventory.jsx
 import React, { useState, useEffect } from "react";
 import {
   Container,
@@ -16,12 +17,12 @@ import {
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../config/JS_apiConfig";
 
-const API_INVENTORY = `${API_BASE_URL}api/inventory`;
-const API_BOOKS = `${API_BASE_URL}api/books`;
-const API_SHELVES = `${API_BASE_URL}api/safeshelves`;
-const API_AUTHORS = `${API_BASE_URL}api/authors`;
+const API_BASE_URL = "https://back-production-25a8.up.railway.app";
+const API_INVENTORY = `${API_BASE_URL}/api/inventory`;
+const API_BOOKS = `${API_BASE_URL}/api/books`;
+const API_SHELVES = `${API_BASE_URL}/api/safeshelves`;
+const API_AUTHORS = `${API_BASE_URL}/api/authors`;
 
 const Inventory = () => {
   const [books, setBooks] = useState([]);
@@ -52,10 +53,10 @@ const Inventory = () => {
 
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token"); // Получаем токен
+        const token = localStorage.getItem("token");
         const headers = {
           Authorization: `Bearer ${token}`,
-          "X-User-Id": user.id, // Передаем user.id только если он есть
+          "X-User-Id": user.id,
         };
         const [inventoryResponse, shelvesResponse, authorsResponse] = await Promise.all([
           axios.get(`${API_INVENTORY}/${user.id}`, { headers }),
