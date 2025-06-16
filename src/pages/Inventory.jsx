@@ -50,7 +50,7 @@ const Inventory = () => {
       navigate("/login");
       return;
     }
-  } , [authLoading, user, toast, navigate]);
+   
 
     const fetchData = async () => {
       try {
