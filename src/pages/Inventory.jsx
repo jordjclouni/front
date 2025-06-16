@@ -1,3 +1,4 @@
+// src/pages/Inventory.jsx
 import React, { useState, useEffect } from "react";
 import {
   Container,
@@ -14,10 +15,9 @@ import {
   Box,
 } from "@chakra-ui/react";
 import axios from "axios";
-
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from '../config/JS_apiConfig';
+import { API_BASE_URL } from "../config/JS_apiConfig";
 
 const API_INVENTORY = `${API_BASE_URL}api/inventory`;
 const API_BOOKS = `${API_BASE_URL}api/books`;
@@ -27,9 +27,9 @@ const API_AUTHORS = `${API_BASE_URL}api/authors`;
 const Inventory = () => {
   const [books, setBooks] = useState([]);
   const [shelves, setShelves] = useState([]);
-  const [authors, setAuthors] = useState([]); // Инициализируем пустым массивом
+  const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedShelf, setSelectedShelf] = useState({}); // Выбранная ячейка для каждой книги
+  const [selectedShelf, setSelectedShelf] = useState({});
   const toast = useToast();
   const navigate = useNavigate();
   const { user, loading: authLoading, error } = useAuth();
@@ -38,8 +38,8 @@ const Inventory = () => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
   useEffect(() => {
-    if (authLoading) return; // Ждём, пока данные авторизации загрузятся
-    if (!user || !user.id) {
+    if (authLoading) return;
+    if (!user?.id) {
       toast({
         title: "Ошибка",
         description: "Пожалуйста, войдите в систему для просмотра инвентаря",
@@ -53,22 +53,20 @@ const Inventory = () => {
 
     const fetchData = async () => {
       try {
-        // Получаем книги, полки и авторов
         const [inventoryResponse, shelvesResponse, authorsResponse] = await Promise.all([
           axios.get(`${API_INVENTORY}/${user.id}`),
           axios.get(API_SHELVES),
-          axios.get(API_AUTHORS), // Загружаем авторов без параметров
+          axios.get(API_AUTHORS),
         ]);
         setBooks(inventoryResponse.data.map((entry) => entry.book));
         setShelves(shelvesResponse.data);
-        setAuthors(authorsResponse.data || []); // Убедимся, что authors — это массив
+        setAuthors(authorsResponse.data || []);
       } catch (inventoryError) {
-        // Если API_INVENTORY недоступен, попробуем получить книги напрямую через Book
         try {
           const [booksResponse, shelvesResponse, authorsResponse] = await Promise.all([
             axios.get(API_BOOKS),
             axios.get(API_SHELVES),
-            axios.get(API_AUTHORS), // Загружаем авторов
+            axios.get(API_AUTHORS),
           ]);
           setBooks(
             booksResponse.data.filter(
@@ -76,7 +74,7 @@ const Inventory = () => {
             )
           );
           setShelves(shelvesResponse.data);
-          setAuthors(authorsResponse.data || []); // Убедимся, что authors — это массив
+          setAuthors(authorsResponse.data || []);
         } catch (booksError) {
           toast({
             title: "Ошибка",
@@ -85,9 +83,8 @@ const Inventory = () => {
             duration: 3000,
             isClosable: true,
           });
-          console.error("Ошибка загрузки инвентаря:", inventoryError, booksError);
           setBooks([]);
-          setAuthors([]); // Устанавливаем пустой массив авторов в случае ошибки
+          setAuthors([]);
         }
       } finally {
         setLoading(false);
@@ -118,38 +115,28 @@ const Inventory = () => {
     }
 
     try {
-      console.log("Отправка запроса на отпуск книги:", {
+      const response = await axios.put(`${API_BOOKS}/${bookId}/release`, {
         user_id: user.id,
         status: "available",
         safe_shelf_id: parseInt(shelfId),
       });
 
-      const response = await axios.put(`${API_BOOKS}/${bookId}/release`, {
-        user_id: user.id,
-        status: "available",
-        safe_shelf_id: parseInt(shelfId), // Указываем выбранную ячейку
-      });
-
-      setBooks(books.filter((book) => book.id !== bookId));
+      setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
       toast({
         title: "Книга отпущена",
-        description: `Книга "${response.data.book.title}" отправлена в ячейку ${shelves.find((s) => s.id === parseInt(shelfId))?.name}.`,
+        description: `Книга "${response.data.book.title}" помещена в "${shelves.find((s) => s.id === parseInt(shelfId))?.name}".`,
         status: "success",
         duration: 3000,
         isClosable: true,
       });
     } catch (error) {
-      const status = error.response?.status;
-      const message = error.response?.data?.error || "Не удалось отпустить книгу";
-
       toast({
         title: "Ошибка",
-        description: message,
+        description: error.response?.data?.error || "Не удалось отпустить книгу",
         status: "error",
         duration: 3000,
         isClosable: true,
       });
-      console.error("Ошибка отпуска книги:", error, error.response?.data);
     }
   };
 
@@ -197,15 +184,13 @@ const Inventory = () => {
                 borderRadius={4}
                 borderWidth={1}
                 borderColor={borderColor}
-                _hover={{ bg: useColorModeValue("gray.100", "gray.600") }}
               >
                 <Text color={textColor}>{book.title} (ISBN: {book.isbn})</Text>
-                <Text color={textColor}>
-                  Статус: {book.status || "Не указан"}
-                </Text>
+                <Text color={textColor}>Статус: {book.status || "Не указан"}</Text>
                 <Text color={textColor}>
                   Автор: {book.author_id ? authors.find((a) => a.id === book.author_id)?.name || "Неизвестен" : "Неизвестен"}
                 </Text>
+
                 <Box mt={2}>
                   <Select
                     placeholder="Выберите ячейку"
@@ -214,7 +199,6 @@ const Inventory = () => {
                     bg={useColorModeValue("gray.100", "gray.600")}
                     color={textColor}
                     borderColor={borderColor}
-                    _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
                   >
                     {shelves.map((shelf) => (
                       <option key={shelf.id} value={shelf.id}>
@@ -223,12 +207,12 @@ const Inventory = () => {
                     ))}
                   </Select>
                 </Box>
+
                 <Button
                   colorScheme="teal"
                   onClick={() => releaseBook(book.id)}
                   size="sm"
                   mt={2}
-                  _hover={{ bg: "teal.600" }}
                   isDisabled={!selectedShelf[book.id]}
                 >
                   Отпустить книгу
