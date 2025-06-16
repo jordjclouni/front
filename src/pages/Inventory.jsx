@@ -1,4 +1,3 @@
-// src/pages/Inventory.jsx
 import React, { useState, useEffect } from "react";
 import {
   Container,
@@ -50,24 +49,27 @@ const Inventory = () => {
       navigate("/login");
       return;
     }
-   
 
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem("token"); // Получаем токен
         const [inventoryResponse, shelvesResponse, authorsResponse] = await Promise.all([
-          axios.get(`${API_INVENTORY}/${user.id}`),
-          axios.get(API_SHELVES),
-          axios.get(API_AUTHORS),
+          axios.get(`${API_INVENTORY}/${user.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(API_SHELVES, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(API_AUTHORS, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         setBooks(inventoryResponse.data.map((entry) => entry.book));
         setShelves(shelvesResponse.data);
         setAuthors(authorsResponse.data || []);
       } catch (inventoryError) {
         try {
+          const token = localStorage.getItem("token");
           const [booksResponse, shelvesResponse, authorsResponse] = await Promise.all([
-            axios.get(API_BOOKS),
-            axios.get(API_SHELVES),
-            axios.get(API_AUTHORS),
+            axios.get(API_BOOKS, { headers: { Authorization: `Bearer ${token}` } }),
+            axios.get(API_SHELVES, { headers: { Authorization: `Bearer ${token}` } }),
+            axios.get(API_AUTHORS, { headers: { Authorization: `Bearer ${token}` } }),
           ]);
           setBooks(
             booksResponse.data.filter(
@@ -116,11 +118,18 @@ const Inventory = () => {
     }
 
     try {
-      const response = await axios.put(`${API_BOOKS}/${bookId}/release`, {
-        user_id: user.id,
-        status: "available",
-        safe_shelf_id: parseInt(shelfId),
-      });
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        `${API_BOOKS}/${bookId}/release`,
+        {
+          user_id: user.id,
+          status: "available",
+          safe_shelf_id: parseInt(shelfId),
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
       toast({
@@ -152,8 +161,8 @@ const Inventory = () => {
   if (error) {
     return (
       <Container maxW="600px" py={6} textAlign="center">
-        <Text color={textColor}>{error}</Text>
-      </Container>
+      <Text color={textColor}>{error}</Text>
+    </Container>
     );
   }
 
