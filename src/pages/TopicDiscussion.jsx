@@ -122,6 +122,52 @@ const TopicDiscussion = () => {
     }
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    if (!window.confirm("Удалить это сообщение?")) return;
+    try {
+      await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, { withCredentials: true });
+      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+      toast({
+        title: "Удалено",
+        description: "Сообщение удалено",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: error.response?.data?.error || "Не удалось удалить сообщение",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleDeleteTopic = async () => {
+    if (!window.confirm("Удалить тему и все сообщения?")) return;
+    try {
+      await axios.delete(`${API_BASE_URL}api/topic/${id}`, { withCredentials: true });
+      toast({
+        title: "Удалено",
+        description: "Тема удалена",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate("/forum");
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: error.response?.data?.error || "Не удалось удалить тему",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <Container maxW="800px" py={6} textAlign="center">
@@ -156,6 +202,17 @@ const TopicDiscussion = () => {
         <Text fontSize="sm" color="gray.500" mt={2}>
           Автор: {topic.user_name} | {new Date(topic.created_at).toLocaleDateString("ru-RU")}
         </Text>
+        {user?.role_id === 1 && (
+          <Button
+            size="sm"
+            colorScheme="red"
+            variant="outline"
+            mt={3}
+            onClick={handleDeleteTopic}
+          >
+            Удалить тему
+          </Button>
+        )}
       </Box>
 
       <Heading size="md" mb={4} color={textColor}>
@@ -179,6 +236,17 @@ const TopicDiscussion = () => {
               <Text fontSize="sm" color="gray.500">
                 Автор: {message.user_name} | {new Date(message.created_at).toLocaleDateString("ru-RU")}
               </Text>
+              {user?.role_id === 1 && (
+                <Button
+                  size="xs"
+                  colorScheme="red"
+                  variant="ghost"
+                  mt={2}
+                  onClick={() => handleDeleteMessage(message.id)}
+                >
+                  Удалить сообщение
+                </Button>
+              )}
             </Box>
           ))
         )}
