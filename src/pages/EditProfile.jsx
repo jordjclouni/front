@@ -120,44 +120,30 @@ const EditProfile = () => {
   };
 
   const handleSubmit = async () => {
-  try {
-    setIsSubmitting(true);
-
-    // Обновляем профиль
-    await axios.put(API_USER_PROFILE, profile, { withCredentials: true });
-
-    // Получаем обновлённые данные профиля
-    const response = await axios.get(API_USER_PROFILE, { withCredentials: true });
-    const updatedUser = response.data;
-
-    // Обновляем localStorage
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-
-    // Обновляем контекст (если есть)
-    if (setUser) setUser(updatedUser);
-
-    toast({
-      title: "Профиль обновлён!",
-      description: "Ваши данные успешно сохранены",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
-
-    navigate("/profile");
-  } catch (error) {
-    const message = error.response?.data?.error || "Не удалось обновить профиль";
-    toast({
-      title: "Ошибка",
-      description: message,
-      status: "error",
-      duration: 3000,
-      isClosable: true,
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    try {
+      setIsSubmitting(true);
+      await axios.put(API_USER_PROFILE, profile, { withCredentials: true });
+      toast({
+        title: "Профиль обновлён!",
+        description: "Ваши данные успешно сохранены",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate("/profile");
+    } catch (error) {
+      const message = error.response?.data?.error || "Не удалось обновить профиль";
+      toast({
+        title: "Ошибка",
+        description: message,
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleCancel = () => {
     navigate("/profile");
