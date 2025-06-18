@@ -125,15 +125,10 @@ const TopicDiscussion = () => {
   const handleDeleteMessage = async (messageId) => {
     if (!window.confirm("Удалить это сообщение?")) return;
     try {
-      await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, { withCredentials: true });
-      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
-      toast({
-        title: "Удалено",
-        description: "Сообщение удалено",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
+      withCredentials: true,
+      data: { role_id: user.role_id },  // <--- передаём роль
+    })
     } catch (error) {
       toast({
         title: "Ошибка",
@@ -148,14 +143,10 @@ const TopicDiscussion = () => {
   const handleDeleteTopic = async () => {
     if (!window.confirm("Удалить тему и все сообщения?")) return;
     try {
-      await axios.delete(`${API_BASE_URL}api/topic/${id}`, { withCredentials: true });
-      toast({
-        title: "Удалено",
-        description: "Тема удалена",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      await axios.delete(`${API_BASE_URL}api/topic/${id}`, {
+      withCredentials: true,
+      data: { role_id: user.role_id },  // <--- передаём роль
+    });
       navigate("/forum");
     } catch (error) {
       toast({
