@@ -175,8 +175,15 @@ const Forum = () => {
                 {topic.description}
               </Text>
               <Text fontSize="sm" color="gray.500">
-                Автор: {topic.user_name} | {new Date(topic.created_at).toLocaleDateString()}
-              </Text>
+              Автор: {topic.user_name} |{" "}
+              {new Date(topic.created_at).toLocaleString("ru-RU", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
             </Box>
           ))
         )}
