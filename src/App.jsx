@@ -28,7 +28,7 @@ import FavoriteBooks from "./pages/FavoriteBooks";
 import BookDetail from "./pages/BookDetail";
 import AdminBook from "./pages/AdminBook";
 import Notifications from "./pages/Notifications";
-
+import AdminForum from "./pages/AdminForum";
 <Routes>
   {/* ... другие маршруты ... */}
   <Route path="/profile" element={<UserProfile />} />
@@ -65,6 +65,7 @@ function App() {
           <Route path="/admin/book" element={<AdminBook />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/admin/forum" element={<AdminForum />} />
 
 
           
