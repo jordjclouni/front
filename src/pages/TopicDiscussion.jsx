@@ -122,42 +122,58 @@ const TopicDiscussion = () => {
     }
   };
 
-  const handleDeleteMessage = async (messageId) => {
-    if (!window.confirm("Удалить это сообщение?")) return;
-    try {
-      await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
-      withCredentials: true,
-      data: { role_id: user.role_id },  // <--- передаём роль
-    })
-    } catch (error) {
-      toast({
-        title: "Ошибка",
-        description: error.response?.data?.error || "Не удалось удалить сообщение",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
-
   const handleDeleteTopic = async () => {
-    if (!window.confirm("Удалить тему и все сообщения?")) return;
-    try {
-      await axios.delete(`${API_BASE_URL}api/topic/${id}`, {
+  try {
+    await axios.delete(`${API_BASE_URL}api/topic/${id}`, {
       withCredentials: true,
-      data: { role_id: user.role_id },  // <--- передаём роль
+      data: { role_id: user.role_id },
     });
-      navigate("/forum");
-    } catch (error) {
-      toast({
-        title: "Ошибка",
-        description: error.response?.data?.error || "Не удалось удалить тему",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
+    toast({
+      title: "Тема удалена",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
+    navigate("/forum"); // ✅ Возврат к списку тем
+  } catch (error) {
+    toast({
+      title: "Ошибка",
+      description: error.response?.data?.error || "Не удалось удалить тему",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+    });
+  }
+};
+
+const handleDeleteMessage = async (messageId) => {
+  try {
+    await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
+      withCredentials: true,
+      data: { role_id: user.role_id },
+    });
+
+    setMessages((prevMessages) =>
+      prevMessages.filter((msg) => msg.id !== messageId) // ✅ фильтруем
+    );
+
+    toast({
+      title: "Сообщение удалено",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
+  } catch (error) {
+    toast({
+      title: "Ошибка",
+      description: error.response?.data?.error || "Не удалось удалить сообщение",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+    });
+  }
+};
+
 
   if (loading || authLoading) {
     return (
