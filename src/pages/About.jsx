@@ -25,6 +25,7 @@ const About = () => {
           fontSize={{ base: "sm", md: "md" }}
           styleType="none"
         >
+          
           <ListItem>
             <Link href="#intro" color="blue.600" fontWeight="bold">
               О буккроссинге
