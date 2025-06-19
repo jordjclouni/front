@@ -73,6 +73,7 @@ const SearchBooks = () => {
   const textColor = useColorModeValue("gray.800", "white");
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const cardBg = useColorModeValue("gray.50", "gray.700");
+  const isAuthorizedUser = user && (user.role_id === 1 || user.role_id === 2);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -510,30 +511,33 @@ const SearchBooks = () => {
                     <Text fontSize="sm" color={textColor} noOfLines={3}>
                       {book.description || "Описание отсутствует"}
                     </Text>
-                    <HStack spacing={3}>
-                      <Button
-                        colorScheme="teal"
-                        leftIcon={<AddIcon />}
-                        size="md"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToInventory(book.id);
-                        }}
-                        isDisabled={book.status !== "available"}
-                      >
-                        Добавить в инвентарь
-                      </Button>
-                      <Button
-                        colorScheme="purple"
-                        size="md"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openReviewModal(book);
-                        }}
-                      >
-                        Оставить отзыв
-                      </Button>
-                    </HStack>
+                    {isAuthorizedUser && (
+                      <HStack spacing={3}>
+                        <Button
+                          colorScheme="teal"
+                          leftIcon={<AddIcon />}
+                          size="md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToInventory(book.id);
+                          }}
+                          isDisabled={book.status !== "available"}
+                        >
+                          Добавить в инвентарь
+                        </Button>
+                        <Button
+                          colorScheme="purple"
+                          size="md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openReviewModal(book);
+                          }}
+                        >
+                          Оставить отзыв
+                        </Button>
+                      </HStack>
+                    )}
+
                   </VStack>
                 </CardBody>
               </Card>
