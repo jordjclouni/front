@@ -123,35 +123,7 @@ const UserProfile = () => {
           _hover={{ boxShadow: "xl", transform: "translateY(-2px)" }}
         >
           <Flex direction="column" align="center" spacing={6}>
-            {profile.avatar_url ? (
-              <Image
-                src={profile.avatar_url}
-                alt="Аватар"
-                boxSize="120px"
-                objectFit="cover"
-                borderRadius="full"
-                border="4px solid"
-                borderColor={accentColor}
-                mb={6}
-              />
-            ) : (
-              <Box
-                boxSize="120px"
-                bg={useColorModeValue("gray.300", "gray.600")}
-                borderRadius="full"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                mb={6}
-                border="4px solid"
-                borderColor={accentColor}
-              >
-                <Text fontSize="lg" color={textColor} fontWeight="bold">
-                  No Avatar
-                </Text>
-              </Box>
-            )}
-
+            
             <VStack spacing={3} align="stretch" w="full">
               <Text fontSize="xl" color={textColor} fontWeight="semibold">
                 {profile.name || "Без имени"}
