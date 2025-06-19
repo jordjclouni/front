@@ -3,15 +3,14 @@ import {
   Container,
   Heading,
   VStack,
-  Box,
   Text,
   Input,
   Textarea,
   Button,
-  Image,
   useToast,
   Spinner,
   useColorModeValue,
+  Box,
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +18,6 @@ import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from '../config/JS_apiConfig';
 
 const API_USER_PROFILE = `${API_BASE_URL}api/user/profile`;
-const API_USER_AVATAR = `${API_BASE_URL}api/user/avatar`;
 
 const EditProfile = () => {
   const [profile, setProfile] = useState({
@@ -28,9 +26,7 @@ const EditProfile = () => {
     bio: "",
     phone: "",
     birth_date: "",
-
   });
- 
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
@@ -67,15 +63,15 @@ const EditProfile = () => {
     if (!authLoading) fetchProfile();
   }, [authLoading, user]);
 
-
-
-  
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfile({ ...profile, [name]: value });
+  };
 
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
       await axios.put(API_USER_PROFILE, profile, { withCredentials: true });
-      localStorage.setItem("user", JSON.stringify({ ...user, ...profile }));
-
 
       // ⬇️ обновление localStorage
       localStorage.setItem("user", JSON.stringify({ ...user, ...profile }));
@@ -130,7 +126,6 @@ const EditProfile = () => {
         borderColor={borderColor}
         boxShadow="md"
       >
-        
         <Input
           placeholder="Имя"
           name="name"
