@@ -320,6 +320,18 @@ const SearchBooksOnHand = () => {
   };
 
   const openRequestModal = (book) => {
+    if (!user || !user.id) {
+      toast({
+        title: "Ошибка",
+        description: "Пожалуйста, войдите в систему для запроса книги",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate("/login");
+      return;
+    }
+
     if (!users[book.user_id]) {
       toast({
         title: "Ошибка",
@@ -579,6 +591,7 @@ const SearchBooksOnHand = () => {
                         colorScheme={favorites.has(book.id) ? "yellow" : "gray"}
                         onClick={() => toggleFavorite(book.id)}
                         aria-label={favorites.has(book.id) ? "Удалить из избранного" : "Добавить в избранное"}
+                        isDisabled={!user || !user.id} // Отключено для незарегистрированных
                       />
                     </HStack>
                     <Text fontSize="md" color={textColor}>
@@ -610,6 +623,7 @@ const SearchBooksOnHand = () => {
                         leftIcon={<ChatIcon />}
                         size="md"
                         onClick={() => openRequestModal(book)}
+                        isDisabled={!user || !user.id} // Отключено для незарегистрированных
                       >
                         Запросить книгу
                       </Button>
@@ -617,6 +631,7 @@ const SearchBooksOnHand = () => {
                         colorScheme="purple"
                         size="md"
                         onClick={() => openReviewModal(book)}
+                        isDisabled={!user || !user.id} // Отключено для незарегистрированных
                       >
                         Оставить отзыв
                       </Button>
