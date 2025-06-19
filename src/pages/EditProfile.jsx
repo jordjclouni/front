@@ -70,6 +70,8 @@ const EditProfile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfile({ ...profile, [name]: value });
+    localStorage.setItem("user", JSON.stringify({ ...user, avatar_url: response.data.avatar_url }));
+
   };
 
   const handleAvatarChange = (e) => {
@@ -91,38 +93,48 @@ const EditProfile = () => {
     const formData = new FormData();
     formData.append("avatar", avatarFile);
 
-    try {
-      setIsSubmitting(true);
-      const response = await axios.post(API_USER_AVATAR, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
-      });
-      setProfile({ ...profile, avatar_url: response.data.avatar_url });
-      toast({
-        title: "Аватар обновлён!",
-        description: "Аватар успешно загружен",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      const message = error.response?.data?.error || "Не удалось загрузить аватар";
-      toast({
-        title: "Ошибка",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+      try {
+    setIsSubmitting(true);
+    const response = await axios.post(API_USER_AVATAR, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      withCredentials: true,
+    });
+    setProfile({ ...profile, avatar_url: response.data.avatar_url });
+
+    // ⬇️ обновление localStorage
+    localStorage.setItem("user", JSON.stringify({ ...user, avatar_url: response.data.avatar_url }));
+
+    toast({
+      title: "Аватар обновлён!",
+      description: "Аватар успешно загружен",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
+  } catch (error) {
+    const message = error.response?.data?.error || "Не удалось загрузить аватар";
+    toast({
+      title: "Ошибка",
+      description: message,
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+
   };
 
   const handleSubmit = async () => {
     try {
-      setIsSubmitting(true);
       await axios.put(API_USER_PROFILE, profile, { withCredentials: true });
+      localStorage.setItem("user", JSON.stringify({ ...user, ...profile }));
+
+
+      // ⬇️ обновление localStorage
+      localStorage.setItem("user", JSON.stringify({ ...user, ...profile }));
+
       toast({
         title: "Профиль обновлён!",
         description: "Ваши данные успешно сохранены",
