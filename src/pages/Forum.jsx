@@ -66,65 +66,72 @@ const Forum = () => {
   };
 
   const handleCreateTopic = async () => {
-    if (!user) {
-      toast({
-        title: "Ошибка",
-        description: "Пожалуйста, войдите в систему, чтобы создать тему",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-      navigate("/login");
-      return;
-    }
+  if (!user) {
+    toast({
+      title: "Ошибка",
+      description: "Пожалуйста, войдите в систему, чтобы создать тему",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+    });
+    navigate("/login");
+    return;
+  }
 
-    if (!newTopic.title.trim() || !newTopic.description.trim()) {
-      toast({
-        title: "Ошибка",
-        description: "Название и описание обязательны",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
+  if (!newTopic.title.trim() || !newTopic.description.trim()) {
+    toast({
+      title: "Ошибка",
+      description: "Название и описание обязательны",
+      status: "warning",
+      duration: 3000,
+      isClosable: true,
+    });
+    return;
+  }
 
-    setIsSubmitting(true);
-    try {
-      const response = await axios.post(API_TOPICS, newTopic);
-      setTopics([
-        {
-          id: response.data.id,
-          title: newTopic.title,
-          description: newTopic.description,
-          user_id: user.id,
-          user_name: user.name,
-          created_at: new Date().toISOString(),
-        },
-        ...topics,
-      ]);
-      setNewTopic({ title: "", description: "" });
-      onClose();
-      toast({
-        title: "Тема создана!",
-        description: "Ваша тема успешно добавлена",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      const message = error.response?.data?.error || "Не удалось создать тему";
-      toast({
-        title: "Ошибка",
-        description: message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  setIsSubmitting(true);
+  try {
+    const response = await axios.post(API_TOPICS, {
+      ...newTopic,
+      user_id: user.id,
+    });
+
+    setTopics([
+      {
+        id: response.data.id,
+        title: newTopic.title,
+        description: newTopic.description,
+        user_id: user.id,
+        user_name: user.name,
+        created_at: new Date().toISOString(),
+      },
+      ...topics,
+    ]);
+
+    setNewTopic({ title: "", description: "" });
+    onClose();
+
+    toast({
+      title: "Тема создана!",
+      description: "Ваша тема успешно добавлена",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
+  } catch (error) {
+    const message = error.response?.data?.error || "Не удалось создать тему";
+    toast({
+      title: "Ошибка",
+      description: message,
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   if (loading || authLoading) {
     return (
