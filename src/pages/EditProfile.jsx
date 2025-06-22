@@ -8,7 +8,6 @@ import {
   Input,
   Textarea,
   Button,
-  Image,
   useToast,
   Spinner,
   useColorModeValue,
@@ -19,7 +18,6 @@ import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from '../config/JS_apiConfig';
 
 const API_USER_PROFILE = `${API_BASE_URL}api/user/profile`;
-const API_USER_AVATAR = `${API_BASE_URL}api/user/avatar`;
 
 const EditProfile = () => {
   const [profile, setProfile] = useState({
@@ -28,9 +26,7 @@ const EditProfile = () => {
     bio: "",
     phone: "",
     birth_date: "",
-    avatar_url: "",
   });
-  const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
@@ -72,64 +68,12 @@ const EditProfile = () => {
     setProfile({ ...profile, [name]: value });
   };
 
-  const handleAvatarChange = (e) => {
-    setAvatarFile(e.target.files[0]);
-  };
-
-  const handleAvatarUpload = async () => {
-    if (!avatarFile) {
-      toast({
-        title: "Ошибка",
-        description: "Выберите файл для аватара",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("avatar", avatarFile);
-
-      try {
-    setIsSubmitting(true);
-    const response = await axios.post(API_USER_AVATAR, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      withCredentials: true,
-    });
-    setProfile({ ...profile, avatar_url: response.data.avatar_url });
-
-    // ⬇️ обновление localStorage
-    localStorage.setItem("user", JSON.stringify({ ...user, avatar_url: response.data.avatar_url }));
-
-    toast({
-      title: "Аватар обновлён!",
-      description: "Аватар успешно загружен",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
-  } catch (error) {
-    const message = error.response?.data?.error || "Не удалось загрузить аватар";
-    toast({
-      title: "Ошибка",
-      description: message,
-      status: "error",
-      duration: 3000,
-      isClosable: true,
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-
-  };
-
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
       await axios.put(API_USER_PROFILE, profile, { withCredentials: true });
-      
 
-      // ⬇️ обновление localStorage
+      // обновим localStorage
       localStorage.setItem("user", JSON.stringify({ ...user, ...profile }));
 
       toast({
@@ -182,42 +126,6 @@ const EditProfile = () => {
         borderColor={borderColor}
         boxShadow="md"
       >
-        {profile.avatar_url ? (
-          <Image
-            src={profile.avatar_url}
-            alt="Аватар"
-            boxSize="150px"
-            objectFit="cover"
-            borderRadius="full"
-            mx="auto"
-            mb={4}
-          />
-        ) : (
-          <Box boxSize="150px" mx="auto" mb={4} bg="gray.200" borderRadius="full">
-            <Text color={textColor} textAlign="center" pt="60px">
-              Нет аватара
-            </Text>
-          </Box>
-        )}
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={handleAvatarChange}
-          bg={useColorModeValue("gray.100", "gray.600")}
-          color={textColor}
-          borderColor={borderColor}
-        />
-        <Button
-          colorScheme="teal"
-          onClick={handleAvatarUpload}
-          isLoading={isSubmitting}
-          loadingText="Загрузка..."
-          width="full"
-          _hover={{ bg: "teal.600" }}
-        >
-          Загрузить аватар
-        </Button>
-
         <Input
           placeholder="Имя"
           name="name"
@@ -228,7 +136,9 @@ const EditProfile = () => {
           borderColor={borderColor}
           _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
         />
-        <Text color={textColor}>Email: {profile.email}</Text> {/* Email нельзя изменить */}
+
+        <Text color={textColor}>Email: {profile.email}</Text>
+
         <Textarea
           placeholder="О себе"
           name="bio"
@@ -239,6 +149,7 @@ const EditProfile = () => {
           borderColor={borderColor}
           _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
         />
+
         <Input
           placeholder="Телефон"
           name="phone"
@@ -249,6 +160,7 @@ const EditProfile = () => {
           borderColor={borderColor}
           _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
         />
+
         <Input
           type="date"
           placeholder="Дата рождения"
@@ -260,6 +172,7 @@ const EditProfile = () => {
           borderColor={borderColor}
           _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
         />
+
         <Box display="flex" gap={3}>
           <Button
             colorScheme="teal"
