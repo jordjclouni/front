@@ -51,8 +51,9 @@ const TopicDiscussion = () => {
         setLoading(false);
       }
     };
+
     if (!authLoading) fetchTopic();
-  }, [id, authLoading, navigate, toast]);
+  }, [id, authLoading]);
 
   const handleMessageChange = (e) => {
     setNewMessage(e.target.value);
@@ -67,7 +68,6 @@ const TopicDiscussion = () => {
         duration: 3000,
         isClosable: true,
       });
-      navigate("/login");
       return;
     }
 
@@ -109,10 +109,9 @@ const TopicDiscussion = () => {
         isClosable: true,
       });
     } catch (error) {
-      const message = error.response?.data?.error || "Не удалось отправить сообщение";
       toast({
         title: "Ошибка",
-        description: message,
+        description: error.response?.data?.error || "Не удалось отправить сообщение",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -123,57 +122,56 @@ const TopicDiscussion = () => {
   };
 
   const handleDeleteTopic = async () => {
-  try {
-    await axios.delete(`${API_BASE_URL}api/topic/${id}`, {
-      withCredentials: true,
-      data: { role_id: user.role_id },
-    });
-    toast({
-      title: "Тема удалена",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
-    navigate("/forum"); // ✅ Возврат к списку тем
-  } catch (error) {
-    toast({
-      title: "Ошибка",
-      description: error.response?.data?.error || "Не удалось удалить тему",
-      status: "error",
-      duration: 3000,
-      isClosable: true,
-    });
-  }
-};
+    try {
+      await axios.delete(`${API_TOPIC}/${id}`, {
+        withCredentials: true,
+        data: { role_id: user.role_id },
+      });
+      toast({
+        title: "Тема удалена",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate("/forum");
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: error.response?.data?.error || "Не удалось удалить тему",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
-const handleDeleteMessage = async (messageId) => {
-  try {
-    await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
-      withCredentials: true,
-      data: { role_id: user.role_id },
-    });
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
+        withCredentials: true,
+        data: { role_id: user.role_id },
+      });
 
-    setMessages((prevMessages) =>
-      prevMessages.filter((msg) => msg.id !== messageId) // ✅ фильтруем
-    );
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== messageId)
+      );
 
-    toast({
-      title: "Сообщение удалено",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
-  } catch (error) {
-    toast({
-      title: "Ошибка",
-      description: error.response?.data?.error || "Не удалось удалить сообщение",
-      status: "error",
-      duration: 3000,
-      isClosable: true,
-    });
-  }
-};
-
+      toast({
+        title: "Сообщение удалено",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: error.response?.data?.error || "Не удалось удалить сообщение",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   if (loading || authLoading) {
     return (
@@ -209,7 +207,7 @@ const handleDeleteMessage = async (messageId) => {
         <Text fontSize="sm" color="gray.500" mt={2}>
           Автор: {topic.user_name} | {new Date(topic.created_at).toLocaleDateString("ru-RU")}
         </Text>
-        {user?.role_id === 1 && (
+        {(user?.role_id === 1 || user?.id === topic.user_id) && (
           <Button
             size="sm"
             colorScheme="red"
@@ -243,7 +241,7 @@ const handleDeleteMessage = async (messageId) => {
               <Text fontSize="sm" color="gray.500">
                 Автор: {message.user_name} | {new Date(message.created_at).toLocaleDateString("ru-RU")}
               </Text>
-              {user?.role_id === 1 && (
+              {(user?.role_id === 1 || user?.id === message.user_id) && (
                 <Button
                   size="xs"
                   colorScheme="red"
@@ -259,27 +257,29 @@ const handleDeleteMessage = async (messageId) => {
         )}
       </VStack>
 
-      <Box>
-        <Textarea
-          placeholder="Напишите ваше сообщение..."
-          value={newMessage}
-          onChange={handleMessageChange}
-          bg={useColorModeValue("gray.100", "gray.600")}
-          color={textColor}
-          borderColor={borderColor}
-          _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
-          mb={3}
-        />
-        <Button
-          colorScheme="teal"
-          onClick={handleCreateMessage}
-          isLoading={isSubmitting}
-          loadingText="Отправка..."
-          _hover={{ bg: "teal.600" }}
-        >
-          Отправить
-        </Button>
-      </Box>
+      {user && (
+        <Box>
+          <Textarea
+            placeholder="Напишите ваше сообщение..."
+            value={newMessage}
+            onChange={handleMessageChange}
+            bg={useColorModeValue("gray.100", "gray.600")}
+            color={textColor}
+            borderColor={borderColor}
+            _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
+            mb={3}
+          />
+          <Button
+            colorScheme="teal"
+            onClick={handleCreateMessage}
+            isLoading={isSubmitting}
+            loadingText="Отправка..."
+            _hover={{ bg: "teal.600" }}
+          >
+            Отправить
+          </Button>
+        </Box>
+      )}
     </Container>
   );
 };
