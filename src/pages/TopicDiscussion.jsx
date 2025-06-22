@@ -84,11 +84,10 @@ const TopicDiscussion = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post(
-        `${API_TOPIC}/${id}/messages`,
-        { content: newMessage },
-        { withCredentials: true }
-      );
+      const response = await axios.post(`${API_TOPIC}/${id}/messages`, {
+  content: newMessage,
+  user_id: user.id  // добавляем
+}, { withCredentials: true });
       setMessages([
         ...messages,
         {
