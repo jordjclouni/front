@@ -28,6 +28,7 @@ const TopicDiscussion = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+
   const bgColor = useColorModeValue("white", "gray.800");
   const textColor = useColorModeValue("gray.800", "white");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -55,15 +56,11 @@ const TopicDiscussion = () => {
     if (!authLoading) fetchTopic();
   }, [id, authLoading]);
 
-  const handleMessageChange = (e) => {
-    setNewMessage(e.target.value);
-  };
-
   const handleCreateMessage = async () => {
     if (!user) {
       toast({
         title: "Ошибка",
-        description: "Пожалуйста, войдите в систему, чтобы отправить сообщение",
+        description: "Необходимо войти в систему",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -89,8 +86,8 @@ const TopicDiscussion = () => {
         user_id: user.id,
       });
 
-      setMessages([
-        ...messages,
+      setMessages((prev) => [
+        ...prev,
         {
           id: response.data.id,
           content: newMessage,
@@ -100,12 +97,11 @@ const TopicDiscussion = () => {
           created_at: new Date().toISOString(),
         },
       ]);
-
       setNewMessage("");
 
       toast({
-        title: "Сообщение отправлено!",
-        description: "Ваше сообщение добавлено в обсуждение",
+        title: "Успешно",
+        description: "Сообщение добавлено",
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -126,10 +122,7 @@ const TopicDiscussion = () => {
   const handleDeleteTopic = async () => {
     try {
       await axios.delete(`${API_TOPIC}/${id}`, {
-        data: {
-          role_id: user.role_id,
-          user_id: user.id,
-        },
+        data: { role_id: user.role_id },
       });
       toast({
         title: "Тема удалена",
@@ -152,15 +145,10 @@ const TopicDiscussion = () => {
   const handleDeleteMessage = async (messageId) => {
     try {
       await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
-        data: {
-          role_id: user.role_id,
-          user_id: user.id,
-        },
+        data: { role_id: user.role_id },
       });
 
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== messageId)
-      );
+      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
 
       toast({
         title: "Сообщение удалено",
@@ -200,6 +188,7 @@ const TopicDiscussion = () => {
       <Heading mb={4} color={textColor}>
         {topic.title}
       </Heading>
+
       <Box
         p={4}
         bg={bgColor}
@@ -213,6 +202,7 @@ const TopicDiscussion = () => {
         <Text fontSize="sm" color="gray.500" mt={2}>
           Автор: {topic.user_name} | {new Date(topic.created_at).toLocaleDateString("ru-RU")}
         </Text>
+
         {(user?.role_id === 1 || user?.id === topic.user_id) && (
           <Button
             size="sm"
@@ -229,6 +219,7 @@ const TopicDiscussion = () => {
       <Heading size="md" mb={4} color={textColor}>
         Обсуждение
       </Heading>
+
       <VStack spacing={3} align="stretch" mb={6}>
         {messages.length === 0 ? (
           <Text color={textColor}>Сообщений пока нет. Будьте первым!</Text>
@@ -245,7 +236,8 @@ const TopicDiscussion = () => {
             >
               <Text color={textColor}>{message.content}</Text>
               <Text fontSize="sm" color="gray.500">
-                Автор: {message.user_name} | {new Date(message.created_at).toLocaleDateString("ru-RU")}
+                Автор: {message.user_name} |{" "}
+                {new Date(message.created_at).toLocaleDateString("ru-RU")}
               </Text>
               {(user?.role_id === 1 || user?.id === message.user_id) && (
                 <Button
@@ -268,7 +260,7 @@ const TopicDiscussion = () => {
           <Textarea
             placeholder="Напишите ваше сообщение..."
             value={newMessage}
-            onChange={handleMessageChange}
+            onChange={(e) => setNewMessage(e.target.value)}
             bg={useColorModeValue("gray.100", "gray.600")}
             color={textColor}
             borderColor={borderColor}
