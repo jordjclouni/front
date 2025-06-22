@@ -14,7 +14,6 @@ import {
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from '../config/JS_apiConfig';
 
 const API_USER_PROFILE = `${API_BASE_URL}api/user/profile`;
@@ -31,20 +30,29 @@ const EditProfile = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+
   const bgColor = useColorModeValue("white", "gray.800");
   const textColor = useColorModeValue("gray.800", "white");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
+  const localUser = JSON.parse(localStorage.getItem("user"));
+  const userId = localUser?.id;
+
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user) {
+      if (!userId) {
         navigate("/login");
         return;
       }
 
       try {
-        const response = await axios.get(API_USER_PROFILE, { withCredentials: true });
+        const response = await axios.get(API_USER_PROFILE, {
+          headers: {
+            "X-User-ID": userId,
+          },
+          withCredentials: true,
+        });
+
         setProfile(response.data);
       } catch (error) {
         toast({
@@ -60,8 +68,8 @@ const EditProfile = () => {
       }
     };
 
-    if (!authLoading) fetchProfile();
-  }, [authLoading, user]);
+    fetchProfile();
+  }, [userId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -71,10 +79,18 @@ const EditProfile = () => {
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
-      await axios.put(API_USER_PROFILE, profile, { withCredentials: true });
+      await axios.put(
+        API_USER_PROFILE,
+        {
+          ...profile,
+          user_id: userId,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
-      // обновим localStorage
-      localStorage.setItem("user", JSON.stringify({ ...user, ...profile }));
+      localStorage.setItem("user", JSON.stringify({ ...localUser, ...profile }));
 
       toast({
         title: "Профиль обновлён!",
@@ -102,7 +118,7 @@ const EditProfile = () => {
     navigate("/profile");
   };
 
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <Container maxW="600px" py={6} textAlign="center">
         <Spinner size="lg" color="teal.500" />
