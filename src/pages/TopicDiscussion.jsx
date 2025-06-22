@@ -14,7 +14,7 @@ import {
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { API_BASE_URL } from '../config/JS_apiConfig';
+import { API_BASE_URL } from "../config/JS_apiConfig";
 
 const API_TOPIC = `${API_BASE_URL}api/topic`;
 
@@ -35,7 +35,7 @@ const TopicDiscussion = () => {
   useEffect(() => {
     const fetchTopic = async () => {
       try {
-        const response = await axios.get(`${API_TOPIC}/${id}`, { withCredentials: true });
+        const response = await axios.get(`${API_TOPIC}/${id}`);
         setTopic(response.data.topic);
         setMessages(response.data.messages);
       } catch (error) {
@@ -85,9 +85,10 @@ const TopicDiscussion = () => {
     setIsSubmitting(true);
     try {
       const response = await axios.post(`${API_TOPIC}/${id}/messages`, {
-  content: newMessage,
-  user_id: user.id  // добавляем
-}, { withCredentials: true });
+        content: newMessage,
+        user_id: user.id,
+      });
+
       setMessages([
         ...messages,
         {
@@ -99,7 +100,9 @@ const TopicDiscussion = () => {
           created_at: new Date().toISOString(),
         },
       ]);
+
       setNewMessage("");
+
       toast({
         title: "Сообщение отправлено!",
         description: "Ваше сообщение добавлено в обсуждение",
@@ -123,8 +126,10 @@ const TopicDiscussion = () => {
   const handleDeleteTopic = async () => {
     try {
       await axios.delete(`${API_TOPIC}/${id}`, {
-        withCredentials: true,
-        data: { role_id: user.role_id },
+        data: {
+          role_id: user.role_id,
+          user_id: user.id,
+        },
       });
       toast({
         title: "Тема удалена",
@@ -147,8 +152,10 @@ const TopicDiscussion = () => {
   const handleDeleteMessage = async (messageId) => {
     try {
       await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
-        withCredentials: true,
-        data: { role_id: user.role_id },
+        data: {
+          role_id: user.role_id,
+          user_id: user.id,
+        },
       });
 
       setMessages((prevMessages) =>
