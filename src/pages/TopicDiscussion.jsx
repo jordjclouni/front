@@ -85,9 +85,10 @@ const TopicDiscussion = () => {
     setIsSubmitting(true);
     try {
       const response = await axios.post(`${API_TOPIC}/${id}/messages`, {
-  content: newMessage,
-  user_id: user.id  // добавляем
-}, { withCredentials: true });
+        content: newMessage,
+        user_id: user.id,
+      }, { withCredentials: true });
+
       setMessages([
         ...messages,
         {
@@ -148,7 +149,10 @@ const TopicDiscussion = () => {
     try {
       await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
         withCredentials: true,
-        data: { role_id: user.role_id },
+        data: {
+          role_id: user.role_id,
+          user_id: user.id,
+        },
       });
 
       setMessages((prevMessages) =>
