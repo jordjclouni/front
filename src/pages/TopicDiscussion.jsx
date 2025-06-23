@@ -121,30 +121,6 @@ const TopicDiscussion = () => {
     }
   };
 
-  const handleDeleteTopic = async () => {
-    try {
-      await axios.delete(`${API_TOPIC}/${id}`, {
-        withCredentials: true,
-        data: { role_id: user.role_id },
-      });
-      toast({
-        title: "Тема удалена",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-      navigate("/forum");
-    } catch (error) {
-      toast({
-        title: "Ошибка",
-        description: error.response?.data?.error || "Не удалось удалить тему",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
-
   const handleDeleteMessage = async (messageId) => {
     try {
       await axios.delete(`${API_BASE_URL}api/messages/${messageId}`, {
@@ -210,17 +186,7 @@ const TopicDiscussion = () => {
         <Text fontSize="sm" color="gray.500" mt={2}>
           Автор: {topic.user_name} | {new Date(topic.created_at).toLocaleDateString("ru-RU")}
         </Text>
-        {(user?.role_id === 1 || user?.id === topic.user_id) && (
-          <Button
-            size="sm"
-            colorScheme="red"
-            variant="outline"
-            mt={3}
-            onClick={handleDeleteTopic}
-          >
-            Удалить тему
-          </Button>
-        )}
+        {/* Кнопка "Удалить тему" убрана */}
       </Box>
 
       <Heading size="md" mb={4} color={textColor}>
