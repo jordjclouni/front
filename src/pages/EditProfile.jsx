@@ -189,6 +189,7 @@ const EditProfile = () => {
           _focus={{ borderColor: "teal.500", boxShadow: "0 0 0 1px teal.500" }}
         />
 
+
         <Box display="flex" gap={3}>
           <Button
             colorScheme="teal"
