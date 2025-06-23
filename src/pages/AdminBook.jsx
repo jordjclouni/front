@@ -259,12 +259,10 @@ const AdminBook = () => {
     }
 
     try {
-      await axios.delete(`${API_BOOKS}/${bookId}`, {
-        headers: {
-          "X-Role-ID": userData.role_id,
-        },
-        withCredentials: true,
-      });
+      await axios.delete(`${API_BOOKS}/${bookId}?user_id=${userData.id}`, {
+      withCredentials: true,
+    });
+
       // Перезагружаем список книг после удаления
       await fetchBooks();
       toast({
