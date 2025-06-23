@@ -119,6 +119,7 @@ const Messenger = () => {
         isClosable: true,
       });
     } catch (error) {
+      console.error("Ошибка при отправке сообщения:", error.response?.data || error.message);
       toast({
         title: "Ошибка",
         description: error.response?.data?.error || "Не удалось отправить сообщение",
@@ -129,61 +130,10 @@ const Messenger = () => {
     }
   };
 
-  const handleGiveBook = async () => {
-    try {
-      const recipientId = selectedConversation.sender_id === user.id
-        ? selectedConversation.recipient_id
-        : selectedConversation.sender_id;
-
-      await axios.post(`${API_BASE_URL}api/inventory`, {
-        user_id: recipientId,
-        book_id: selectedConversation.book_id,
-      });
-
-      toast({
-        title: "Успех",
-        description: "Книга передана пользователю",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: "Ошибка",
-        description: error.response?.data?.error || "Не удалось передать книгу",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
-
-  const handleDeleteConversation = async () => {
-    try {
-      await axios.delete(`${API_CONVERSATIONS}/${selectedConversation.id}`);
-      setConversations(conversations.filter(c => c.id !== selectedConversation.id));
-      setSelectedConversation(null);
-      setMessages([]);
-      toast({
-        title: "Удалено",
-        description: "Беседа удалена",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось удалить беседу",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
-
+  // Функция для добавления 5 часов и форматирования времени в русском формате
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
+    // Добавляем 5 часов
     date.setHours(date.getHours() + 3);
     return {
       date: date.toLocaleDateString("ru-RU", {
@@ -263,21 +213,9 @@ const Messenger = () => {
         >
           {selectedConversation ? (
             <>
-              <Flex justify="space-between" align="center" mb={3}>
-                <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                  Чат по книге: {selectedConversation.book_title}
-                </Text>
-                <HStack spacing={2}>
-                  <Button size="sm" colorScheme="red" onClick={handleDeleteConversation}>
-                    Удалить чат
-                  </Button>
-                  {user.id === selectedConversation.recipient_id && (
-                    <Button size="sm" colorScheme="green" onClick={handleGiveBook}>
-                      Отдать книгу
-                    </Button>
-                  )}
-                </HStack>
-              </Flex>
+              <Text fontSize="lg" fontWeight="bold" mb={3} color={textColor}>
+                Чат по книге: {selectedConversation.book_title}
+              </Text>
               <Divider mb={3} />
               <Box flex="1" overflowY="auto" mb={3}>
                 {messages.length === 0 ? (
